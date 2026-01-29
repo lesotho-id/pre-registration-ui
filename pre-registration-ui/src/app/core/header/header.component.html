@@ -21,10 +21,10 @@
         </button>
       </div>
       <a *ngIf="!authService.isAuthenticated()" href="./" mat-list-item>
-        <img src="assets\mosip-logo-white.png" alt="MOSIP logo" class="header--logo" style="max-height: 2.5rem"/>
+        <img src="assets\GovLs_Flag.svg" alt="MOSIP logo" class="header--logo" style="max-height: 2.5rem"/>
       </a>
       <a *ngIf="authService.isAuthenticated()" (click)="onLogoClick()" mat-list-item>
-        <img src="assets\mosip-logo-white.png" alt="MOSIP logo" class="header--logo" style="max-height: 2.5rem"/>
+        <img src="assets\GovLs_Flag.svg" alt="MOSIP logo" class="header--logo" style="max-height: 2.5rem"/>
       </a>
       <mat-nav-list class="list-item">
         <a mat-list-item routerLink="/about-us">{{ 'header.link_about' | translate }}</a>
