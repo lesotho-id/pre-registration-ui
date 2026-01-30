@@ -4,7 +4,8 @@
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url(./assets/icons/iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
+  src: url(./assets/icons/iconfont/MaterialIcons-Regular.eot);
+  /* For IE6-8 */
   src: local('Material Icons'), local('MaterialIcons-Regular'),
     url(./assets/icons/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
     url(./assets/icons/iconfont/MaterialIcons-Regular.woff) format('woff'),
@@ -33,7 +34,8 @@ button {
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
-  font-size: 24px; /* Preferred icon size */
+  font-size: 24px;
+  /* Preferred icon size */
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -66,6 +68,7 @@ body {
   -ms-overflow-style: -ms-autohiding-scrollbar;
   -ms-overflow-style: none;
 }
+
 .btn_axn-pri {
   min-width: 158px;
   min-height: 50px;
@@ -127,13 +130,19 @@ body {
   min-height: 40px;
   padding: 0px 15px;
 }
+
 .select-option {
   margin-top: 35px;
   margin-bottom: 30px;
 }
 
 .wrapper {
-  background: rgba(255, 255, 255, 1) !important;
+  /* background: rgba(255, 255, 255, 1) !important; */
+  background-image: url(./assets/Lesotho-feature.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  height: 80vh;
 }
 
 :host ::ng-deep .ng2-pdf-viewer-container {
@@ -148,14 +157,15 @@ body {
   border-radius: 0 !important;
   background: rgba(255, 255, 255, 1);
 }
+
 .mat-select-panel .mat-option.mat-selected:not(.mat-option-multiple):hover,
-.select-option > mat-option:hover {
+.select-option>mat-option:hover {
   background-color: rgba(230, 58, 116, 1) !important;
   color: rgba(255, 255, 255, 1) !important;
 }
 
 .mat-select-panel .mat-option.mat-selected:not(.mat-option-multiple):active,
-.select-option > mat-option:active {
+.select-option>mat-option:active {
   background-color: rgba(179, 45, 90, 1) !important;
   color: rgba(255, 255, 255, 1) !important;
 }
@@ -209,6 +219,7 @@ body {
     height: 30px;
   }
 }
+
 .user__date .mat-form-field-label {
   text-align: center;
 }
@@ -224,12 +235,15 @@ mat-keyboard-container mat-keyboard-key .mat-keyboard-key {
   /* //padding: unset !important; */
   padding: 0 0.485rem !important;
 }
+
 .mat-keyboard-col {
   padding: 1px !important;
 }
+
 .mat-keyboard-wrapper {
   padding: 0 !important;
 }
+
 .ol-viewport {
   overflow: visible !important;
   min-height: 275px !important;
@@ -243,9 +257,10 @@ mat-keyboard-container mat-keyboard-key .mat-keyboard-key {
   display: none !important;
 }
 
-.ng2-pdf-viewer-container > div {
+.ng2-pdf-viewer-container>div {
   position: relative;
 }
+
 .user__btn:disabled,
 .user__btn:active {
   border: 1px solid lightgray;
@@ -253,6 +268,7 @@ mat-keyboard-container mat-keyboard-key .mat-keyboard-key {
   color: #2f3033;
   cursor: default;
 }
+
 .user__btn {
   background-color: #ff4081;
   border: none;
@@ -267,11 +283,13 @@ mat-keyboard-container mat-keyboard-key .mat-keyboard-key {
   border-radius: 2px;
   text-transform: uppercase;
 }
+
 .user__btn-back {
   background-color: #ffffff;
   border: 1px solid #ff4081;
   color: #ff4081;
 }
+
 .user__btn-action {
   background-color: #ffffff;
   border: 1px solid #ff4081;
