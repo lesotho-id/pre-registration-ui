@@ -67,11 +67,11 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       });
     }
     this.dataStorageService
-    .getI18NLanguageFiles(this.langCode)
-    .subscribe((response) => {
-      this.errorlabels = response[appConstants.ERROR];
-      this.apiErrorCodes = response[appConstants.API_ERROR_CODES];
-    });
+      .getI18NLanguageFiles(this.langCode)
+      .subscribe((response) => {
+        this.errorlabels = response[appConstants.ERROR];
+        this.apiErrorCodes = response[appConstants.API_ERROR_CODES];
+      });
     this.name = this.configService.getConfigByKey(
       appConstants.CONFIG_KEYS.preregistration_identity_name
     );
@@ -89,7 +89,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     this.notificationTypes = notificationTypes.map((item) =>
       item.toUpperCase()
     );
-    
+
 
     await this.apiCalls();
     if (this.bookingService.getSendNotification()) {
@@ -127,14 +127,21 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             };
             nameListObj.preRegId = user["request"].preRegistrationId;
             nameListObj.status = user["request"].statusCode;
-            if (demographicData[this.name]) {
-              let nameValues = demographicData[this.name];
-              nameValues.forEach(nameVal => {
-                if (nameVal["language"] == applicationLang) {
-                  nameListObj.fullName = nameVal["value"];
-                }
-              });  
+
+            let fullNameConcat = "";
+            for (var names of this.name.split(",")) {
+              if (demographicData[names]) {
+                let nameValues = demographicData[names] == null ? [] : demographicData[names];
+                console.log('nameValues', nameValues);
+                nameValues.forEach(nameVal => {
+                  if (nameVal["language"] == applicationLang) {
+                    fullNameConcat += nameVal["value"] + " ";
+                  }
+                });
+              }
             }
+            nameListObj.fullName = fullNameConcat;
+
             if (demographicData["postalCode"]) {
               nameListObj.postalCode = demographicData["postalCode"];
             }
@@ -171,9 +178,9 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
           );
         }
       },
-      (error) => {
-        this.showErrorMessage(error);
-      });
+        (error) => {
+          this.showErrorMessage(error);
+        });
     });
   }
 
@@ -185,13 +192,13 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
           //console.log(response);
           if (response[appConstants.RESPONSE]) {
             this.regCenterId =
-            response[appConstants.RESPONSE].registration_center_id;
+              response[appConstants.RESPONSE].registration_center_id;
           }
           resolve(response[appConstants.RESPONSE]);
         },
-        (error) => {
-          this.showErrorMessage(error);
-        });
+          (error) => {
+            this.showErrorMessage(error);
+          });
     });
   }
 
@@ -206,36 +213,36 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             resolve(true);
           }
         },
-        (error) => {
-          this.usersInfoArr[index].registrationCenter = "";
-          resolve(true);
-          //suppress the err popup, as reg center maybe added only in one lang
-          //this.showErrorMessage(error);
-        });
+          (error) => {
+            this.usersInfoArr[index].registrationCenter = "";
+            resolve(true);
+            //suppress the err popup, as reg center maybe added only in one lang
+            //this.showErrorMessage(error);
+          });
     });
   }
 
   async getLabelDetails(langCode, index) {
     return new Promise((resolve) => {
       this.dataStorageService
-      .getI18NLanguageFiles(langCode)
-      .subscribe((response) => {
-        this.usersInfoArr[index].labelDetails.push(response["acknowledgement"]);
-        //console.log(this.usersInfoArr[index].labelDetails);
-        resolve(true);
-      });
+        .getI18NLanguageFiles(langCode)
+        .subscribe((response) => {
+          this.usersInfoArr[index].labelDetails.push(response["acknowledgement"]);
+          //console.log(this.usersInfoArr[index].labelDetails);
+          resolve(true);
+        });
     });
   }
 
   async getUserLangLabelDetails(langCode, index) {
     return new Promise((resolve) => {
       this.dataStorageService
-      .getI18NLanguageFiles(langCode)
-      .subscribe((response) => {
-        this.usersInfoArr[index].userLangLabelDetails.push(response["acknowledgement"]);
-        //console.log(this.usersInfoArr[index].labelDetails);
-        resolve(true);
-      });
+        .getI18NLanguageFiles(langCode)
+        .subscribe((response) => {
+          this.usersInfoArr[index].userLangLabelDetails.push(response["acknowledgement"]);
+          //console.log(this.usersInfoArr[index].labelDetails);
+          resolve(true);
+        });
     });
   }
 
@@ -245,22 +252,22 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
         "qrCodeBlob": null,
       };
       let preRegIdLabels = [],
-      appDateLabels = [],
-      contactPhoneLabels = [],
-      messages = [],
-      labelNames = [],
-      nameValues = [],
-      labelRegCntrs = [],
-      regCntrNames = [],
-      appLangCode = [],
-      bookingDataPrimary = [],
-      bookingTimePrimary = [];
+        appDateLabels = [],
+        contactPhoneLabels = [],
+        messages = [],
+        labelNames = [],
+        nameValues = [],
+        labelRegCntrs = [],
+        regCntrNames = [],
+        appLangCode = [],
+        bookingDataPrimary = [],
+        bookingTimePrimary = [];
 
       this.ackDataItem["preRegId"] = prid;
-      
+
       this.ackDataItem["contactPhone"] =
         this.usersInfoArr[0].registrationCenter.contactPhone;
-      
+
       this.usersInfoArr.forEach(userInfo => {
         if (userInfo.preRegId == prid) {
           this.ackDataItem["qrCodeBlob"] = userInfo.qrCodeBlob;
@@ -282,14 +289,14 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             //matching lang found
             bookingTimePrimary.push({
               langCode: userInfo.langCode,
-              time:userInfo.bookingTimePrimary,
+              time: userInfo.bookingTimePrimary,
               langAvailable: true
             });
             bookingDataPrimary.push({
               langCode: userInfo.langCode,
-              date:userInfo.bookingDataPrimary,
+              date: userInfo.bookingDataPrimary,
               langAvailable: true
-            });  
+            });
             let fltr = messages.filter(msg => msg.preRegId == fltrLangs[0].preRegId);
             if (fltr.length == 0) {
               messages.push({
@@ -301,20 +308,20 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             //matching lang found
             bookingTimePrimary.push({
               langCode: userInfo.langCode,
-              time:userInfo.bookingTimePrimary,
+              time: userInfo.bookingTimePrimary,
               langAvailable: false
             });
             bookingDataPrimary.push({
               langCode: userInfo.langCode,
-              date:userInfo.bookingDataPrimary,
+              date: userInfo.bookingDataPrimary,
               langAvailable: false
-            });  
+            });
             let fltr = messages.filter(msg => msg.preRegId == userInfo.preRegId);
             if (fltr.length == 0) {
               messages.push({
                 "preRegId": userInfo.preRegId,
                 "message": userInfo.userLangLabelDetails[0].message
-              });  
+              });
             }
           }
         }
@@ -378,7 +385,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       this.ackDataArr.push(this.ackDataItem);
       this.ackDataItem = {};
     });
-    
+
   }
 
   async apiCalls() {
@@ -386,7 +393,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       this.formatDateTime();
       await this.qrCodeForUser();
       await this.getTemplate();
-     
+
       resolve(true);
     });
   }
@@ -405,8 +412,8 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
 
   formatDateTime() {
     const ltrLangs = this.configService
-    .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
-    .split(",");
+      .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
+      .split(",");
     this.usersInfoArr.forEach(userInfo => {
       if (!userInfo.bookingData) {
         userInfo.bookingDataPrimary = Utils.getBookingDateTime(
@@ -427,8 +434,8 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
           ltrLangs
         );
         userInfo.bookingTimePrimary = Utils.formatTime(date[1]);
-      }    
-    });  
+      }
+    });
   }
 
   automaticNotification() {
@@ -454,47 +461,48 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     this.ackDataArr.forEach(ackDataItem => {
       const preRegId = ackDataItem["preRegId"];
       this.pdfOptions = {
-        margin: [15,15],
+        margin: [15, 15],
         filename: preRegId + ".pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 1, letterRendering: true },
         jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
-      
+
       const element = document.getElementById("pdf-section" + "-" + preRegId);
       window.scroll(0, 0);
       html2pdf(element, this.pdfOptions);
     });
   }
 
-  // async generateBlob() {
-  //   const element = document.getElementById("print-section");
-  //   return await html2pdf()
-  //     .set(this.pdfOptions)
-  //     .from(element)
-  //     .outputPdf("dataurlstring");
-  // }
+  // to send the ack file via email
+  async generateBlob() {
+    const element = document.getElementById("print-section");
+    return await html2pdf()
+      .set(this.pdfOptions)
+      .from(element)
+      .outputPdf("dataurlstring");
+  }
+  // to send the ack file via email
+  async createBlob() {
+    const dataUrl = await this.generateBlob();
+    // convert base64 to raw binary data held in a string
+    const byteString = atob(dataUrl.split(",")[1]);
 
-  // async createBlob() {
-  //   const dataUrl = await this.generateBlob();
-  //   // convert base64 to raw binary data held in a string
-  //   const byteString = atob(dataUrl.split(",")[1]);
+    // separate out the mime component
+    const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
 
-  //   // separate out the mime component
-  //   const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
+    // write the bytes of the string to an ArrayBuffer
+    const arrayBuffer = new ArrayBuffer(byteString.length);
 
-  //   // write the bytes of the string to an ArrayBuffer
-  //   const arrayBuffer = new ArrayBuffer(byteString.length);
+    var _ia = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+      _ia[i] = byteString.charCodeAt(i);
+    }
 
-  //   var _ia = new Uint8Array(arrayBuffer);
-  //   for (let i = 0; i < byteString.length; i++) {
-  //     _ia[i] = byteString.charCodeAt(i);
-  //   }
-
-  //   const dataView = new DataView(arrayBuffer);
-  //   return await new Blob([dataView], { type: mimeString });
-  // }
+    const dataView = new DataView(arrayBuffer);
+    return await new Blob([dataView], { type: mimeString });
+  }
 
   sendAcknowledgement() {
     const data = {
@@ -563,8 +571,8 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             Number(user.bookingTimePrimary.split(":")[0]) < 10
               ? "0" + user.bookingTimePrimary
               : user.bookingTimePrimary,
-              contactInfo["phone"] === undefined ? null : contactInfo["phone"],
-              contactInfo["email"] === undefined ? null : contactInfo["email"],
+            contactInfo["phone"] === undefined ? null : contactInfo["phone"],
+            contactInfo["email"] === undefined ? null : contactInfo["email"],
             additionalRecipient,
             false
           );
@@ -589,21 +597,21 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       //   `${preRegId}.pdf`
       // );
       await this.sendNotificationForPreRegId(notificationRequest);
-    }); 
+    });
   }
 
   private sendNotificationForPreRegId(notificationRequest) {
     return new Promise((resolve, reject) => {
       this.subscriptions.push(
         this.dataStorageService
-        .sendNotification(notificationRequest)
-        .subscribe((response) => {
-          resolve(true);
-        },
-        (error) => {
-          resolve(true);
-          this.showErrorMessage(error);
-        })
+          .sendNotification(notificationRequest)
+          .subscribe((response) => {
+            resolve(true);
+          },
+            (error) => {
+              resolve(true);
+              this.showErrorMessage(error);
+            })
       );
     });
   }
@@ -614,9 +622,9 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
    * @private
    * @memberof AcknowledgementComponent
    */
-   private showErrorMessage(error: any) {
+  private showErrorMessage(error: any) {
     const titleOnError = this.errorlabels.errorLabel;
-    const message = Utils.createErrorMessage(error, this.errorlabels, this.apiErrorCodes, this.configService); 
+    const message = Utils.createErrorMessage(error, this.errorlabels, this.apiErrorCodes, this.configService);
     const body = {
       case: "ERROR",
       title: titleOnError,

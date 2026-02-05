@@ -162,10 +162,10 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         );
         resolve(true);
       },
-      (error) => {
-        this.showErrorMessage(error);
-      });
-    });  
+        (error) => {
+          this.showErrorMessage(error);
+        });
+    });
   }
 
   /**
@@ -195,7 +195,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
 
           this.allApplicants =
             applicants[appConstants.RESPONSE][
-              appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
+            appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
             ];
           for (
             let index = 0;
@@ -245,20 +245,20 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   private createAppointmentDateTime(applicant: any) {
     const bookingRegistrationDTO =
       applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ];
     const date =
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
       ];
     const fromTime =
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
-          .time_slot_from
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
+        .time_slot_from
       ];
     const toTime =
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
       ];
     let appointmentDateTime = date + " ( " + fromTime + " - " + toTime + " )";
     return appointmentDateTime;
@@ -275,14 +275,14 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   private createAppointmentDate(applicant: any) {
     const bookingRegistrationDTO =
       applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ];
     const ltrLangs = this.configService
-    .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
-    .split(",");  
+      .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
+      .split(",");
     const date = Utils.getBookingDateTime(
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
       ],
       "",
       this.userPreferredLangCode,
@@ -303,16 +303,16 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   private createAppointmentTime(applicant: any) {
     const bookingRegistrationDTO =
       applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ];
     const fromTime =
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
-          .time_slot_from
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
+        .time_slot_from
       ];
     const toTime =
       bookingRegistrationDTO[
-        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
       ];
     let appointmentTime = " ( " + fromTime + " - " + toTime + " ) ";
     return appointmentTime;
@@ -329,7 +329,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   createApplicant(applicants: any, index: number) {
     const applicantResponse =
       applicants[appConstants.RESPONSE][
-        appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
+      appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
       ][index];
     let dataAvailableLanguages = [];
     if (Array.isArray(applicantResponse["dataCaptureLanguage"])) {
@@ -340,28 +340,34 @@ export class DashBoardComponent implements OnInit, OnDestroy {
       dataAvailableLanguages = Utils.reorderLangsForUserPreferredLang(dataAvailableLanguages, this.userPreferredLangCode);
     }
     let applicantName = "";
-    const nameField = applicantResponse["demographicMetadata"][this.name];
-    if (Array.isArray(nameField)) {
-      nameField.forEach(fld => {
-        if (fld.language == this.userPreferredLangCode) {
-          applicantName = fld.value;
-        }
-      });
-      if (applicantName == "" && dataAvailableLanguages.length > 0) {
-        nameField.forEach(fld => {
-          if (fld.language == dataAvailableLanguages[0]) {
-            applicantName = fld.value;
+    const [lastKey, midKey, firstKey] = (this.name || "").split(",");
+
+    const keys = [lastKey, midKey, firstKey].filter(k => k);
+    const metadata: any = applicantResponse["demographicMetadata"] || {};
+    const fields: Record<string, any> = {
+      last: keys[0] ? metadata[keys[0]] : null,
+      mid: keys[1] ? metadata[keys[1]] : null,
+      first: keys[2] ? metadata[keys[2]] : null,
+    };
+
+    function getNameByLang(lang: string): string {
+      return ["last", "mid", "first"]
+        .map(key => {
+          const field = fields[key];
+          if (!field) return "";
+          if (Array.isArray(field)) {
+            const match = field.find(fld => fld.language === lang);
+            return match ? match.value : "";
           }
-        });  
-      }
-    } else {
-      if (nameField)
-      applicantName = nameField;
-      else 
-      applicantName = "";
+          return String(field);
+        })
+        .filter(v => v && v.trim())
+        .join(" ");
     }
-    let dataCaptureLanguagesLabels = Utils.getLanguageLabels(JSON.stringify(dataAvailableLanguages), 
-          localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES));
+
+    applicantName = getNameByLang(this.userPreferredLangCode);
+    let dataCaptureLanguagesLabels = Utils.getLanguageLabels(JSON.stringify(dataAvailableLanguages),
+      localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES));
     const applicant: Applicant = {
       applicationID:
         applicantResponse[appConstants.DASHBOARD_RESPONSE_KEYS.applicant.preId],
@@ -383,17 +389,17 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         : "-",
       status:
         applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.applicant.statusCode
+        appConstants.DASHBOARD_RESPONSE_KEYS.applicant.statusCode
         ],
       regDto:
         applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
         ],
       postalCode:
         applicantResponse["demographicMetadata"][
-          appConstants.DASHBOARD_RESPONSE_KEYS.applicant.postalCode
+        appConstants.DASHBOARD_RESPONSE_KEYS.applicant.postalCode
         ],
-      dataCaptureLangs: dataCaptureLanguagesLabels    
+      dataCaptureLangs: dataCaptureLanguagesLabels
     };
 
     return applicant;
@@ -405,10 +411,10 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   async onNewApplication() {
-     //first check if data capture languages are in session or not
-     const dataCaptureLangsFromSession = localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES);
-     console.log(`dataCaptureLangsFromSession: ${dataCaptureLangsFromSession}`);
-     if (dataCaptureLangsFromSession) {
+    //first check if data capture languages are in session or not
+    const dataCaptureLangsFromSession = localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES);
+    console.log(`dataCaptureLangsFromSession: ${dataCaptureLangsFromSession}`);
+    if (dataCaptureLangsFromSession) {
       localStorage.setItem(appConstants.MODIFY_USER, "false");
       localStorage.setItem(appConstants.NEW_APPLICANT, "true");
       if (this.loginId) {
@@ -419,8 +425,8 @@ export class DashBoardComponent implements OnInit, OnDestroy {
       } else {
         this.router.navigate(["/"]);
       }
-     } else {
-       //no data capture langs stored in session, hence prompt the user  
+    } else {
+      //no data capture langs stored in session, hence prompt the user  
       if (
         this.maxLanguage > 1 &&
         this.optionalLanguages.length > 0 &&
@@ -437,7 +443,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         this.isNavigateToDemographic = true;
       }
       if (this.isNavigateToDemographic) {
-        let dataCaptureLanguagesLabels = Utils.getLanguageLabels(localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES), 
+        let dataCaptureLanguagesLabels = Utils.getLanguageLabels(localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES),
           localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES));
         localStorage.setItem(appConstants.DATA_CAPTURE_LANGUAGE_LABELS, JSON.stringify(dataCaptureLanguagesLabels));
         localStorage.setItem(appConstants.MODIFY_USER, "false");
@@ -456,7 +462,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
 
   openLangSelectionPopup() {
     return new Promise((resolve) => {
-      const popupAttributes = Utils.getLangSelectionPopupAttributes(this.textDir, 
+      const popupAttributes = Utils.getLangSelectionPopupAttributes(this.textDir,
         this.dataCaptureLabels, this.mandatoryLanguages, this.minLanguage, this.maxLanguage, this.userPreferredLangCode);
       const dialogRef = this.openDialog(popupAttributes, "550px", "350px");
       dialogRef.afterClosed().subscribe((res) => {
@@ -551,7 +557,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
     if (element.regDto && element.status.toLowerCase() === "booked") {
       await this.sendNotification(element.applicationID, appointmentDate, appointmentTime);
     }
-    
+
     const subs = this.dataStorageService
       .deleteRegistration(element.applicationID)
       .subscribe(
@@ -572,7 +578,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
                 this.languagelabels.deletePreregistration.msg_deleted
               );
             }
-          } 
+          }
         },
         (error) => {
           this.showErrorMessage(error, this.languagelabels.title_error, this.languagelabels.deletePreregistration.msg_could_not_deleted);
@@ -608,7 +614,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
               appConstants.APPLICATION_STATUS_CODES.cancelled;
             this.users[index].appointmentDate = "-";
             this.users[index].appointmentTime = "";
-          } 
+          }
         },
         (error) => {
           this.showErrorMessage(error, this.languagelabels.title_error, this.languagelabels.cancelAppointment.msg_could_not_deleted);
@@ -800,17 +806,17 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @private
    * @memberof DashBoardComponent
    */
-   private showErrorMessage(error: any, customTitle?: string, customMsg?: string) {
+  private showErrorMessage(error: any, customTitle?: string, customMsg?: string) {
     let titleOnError = this.errorLanguagelabels.errorLabel;
     if (customTitle) {
       titleOnError = customTitle;
     }
-    
+
     let message = "";
     if (customMsg) {
       message = customMsg;
     } else {
-      message = Utils.createErrorMessage(error, this.errorLanguagelabels, this.apiErrorCodes, this.configService); 
+      message = Utils.createErrorMessage(error, this.errorLanguagelabels, this.apiErrorCodes, this.configService);
     }
     const body = {
       case: "ERROR",
@@ -823,7 +829,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
       data: body,
     });
   }
-  
+
   // async sendNotification(prid, appDate, appDateTime) {
   //   let userDetails;
   //   this.dataStorageService.getUser(prid).subscribe((response) => {
@@ -862,8 +868,8 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   //   });
   // }
 
-  private sendNotification(prid, appDate, appDateTime)  {
-    let userDetails;    
+  private sendNotification(prid, appDate, appDateTime) {
+    let userDetails;
     return new Promise((resolve, reject) => {
       this.subscriptions.push(
         this.dataStorageService.getUser(prid).subscribe((response) => {
@@ -899,17 +905,17 @@ export class DashBoardComponent implements OnInit, OnDestroy {
               .subscribe((response) => {
                 resolve(true);
               },
-              (error) => {
-                resolve(true);
-                this.showErrorMessage(error);
-            });        
+                (error) => {
+                  resolve(true);
+                  this.showErrorMessage(error);
+                });
           }
         },
-        (error) => {
-          this.showErrorMessage(error);
-        })
+          (error) => {
+            this.showErrorMessage(error);
+          })
       );
-    });  
+    });
   }
 
   ngOnDestroy(): void {
