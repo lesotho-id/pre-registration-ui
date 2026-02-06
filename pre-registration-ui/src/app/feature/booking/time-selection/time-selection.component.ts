@@ -158,7 +158,7 @@ export class TimeSelectionComponent
         )
         .subscribe((response) => {
           if (response[appConstants.RESPONSE]) {
-            console.log(response[appConstants.RESPONSE]);
+            // console.log(response[appConstants.RESPONSE]);
             this.regCenterInfo =
               response[appConstants.RESPONSE].registrationCenters[0];
             resolve(true);
@@ -171,9 +171,9 @@ export class TimeSelectionComponent
   }
 
   private prepareNameList(userInfo, regCenterInfo) {
-    console.log(this.userInfo.length);
+    // console.log(this.userInfo.length);
     userInfo.forEach((user) => {
-      console.log(user);
+      // console.log(user);
       const nameList: NameList = {
         preRegId: "",
         fullName: "",
@@ -193,8 +193,7 @@ export class TimeSelectionComponent
 
       if (filteredLangs.length > 0) {
         for (var names of this.name.split(",")) {
-          let nameValues = demographicData[this.name];
-          console.log('nameValues', nameValues);
+          let nameValues = demographicData[names];
           if (Array.isArray(nameValues) && nameValues != null && nameValues.length > 0) {
             nameValues.forEach(nameVal => {
               if (nameVal["language"] == this.userPreferredLangCode) {
@@ -217,7 +216,7 @@ export class TimeSelectionComponent
       nameList.status = user.request.statusCode;
       nameList.postalCode = demographicData["postalCode"];
       nameList.registrationCenter = regCenterInfo;
-      console.log(`user.request.statusCode: ${user.request.statusCode}`);
+      // console.log(`user.request.statusCode: ${user.request.statusCode}`);
       if (user.request.statusCode === appConstants.APPLICATION_STATUS_CODES.pending) {
         this.showNote = true;
       }
@@ -447,18 +446,18 @@ export class TimeSelectionComponent
         this.availabilityData[this.selectedTile].showAfternoon)
     ) {
       this.activeTab = selection;
-      console.log(this.availabilityData[this.selectedTile]);
-      console.log(
-        this.availabilityData[this.selectedTile].timeSlots.filter(
-          (day) => day.tag === this.activeTab
-        ).length
-      );
+      // console.log(this.availabilityData[this.selectedTile]);
+      // console.log(
+      //   this.availabilityData[this.selectedTile].timeSlots.filter(
+      //     (day) => day.tag === this.activeTab
+      //   ).length
+      // );
       this.availabilityData[this.selectedTile].timeSlots.filter(
         (day) => day.tag === this.activeTab
       ).length > 0
         ? (this.showsNamesContainer = true)
         : (this.showsNamesContainer = false);
-      console.log(this.showsNamesContainer);
+      // console.log(this.showsNamesContainer);
     }
   }
 
