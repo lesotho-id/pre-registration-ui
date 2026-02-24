@@ -15,7 +15,8 @@
   top: 0;
   position: fixed;
   z-index: 999;
-  background-color: #0b6a82;
+  /* background-color: #0b6a82; */
+  background-color: #ffffff;
   border-color: #707070;
   border-width: 1px;
   overflow-x: hidden;
@@ -36,21 +37,21 @@
   flex: 1 1 auto;
 }
 .list-item > .mat-list-item {
-  color: #fff !important;
-  font-size: 12px !important;
+  color: #0B6A82 !important;
+  font-size: 13px !important;
   line-height: 1.42857143 !important;
   text-decoration: none;
   text-transform: uppercase;
   font-family: Helvetica, sans-serif;
-  font-weight: 200;
+  font-weight: 600;
 }
 .list-item {
   display: inline-flex;
   padding: 0px;
-  margin-left: 25px;
+  margin-left: 15px;
 }
 .icon {
-  color: #fff !important;
+  color: #0B6A82 !important;
 }
 .sidenav-list > .mat-list-item {
   color: black;
@@ -63,6 +64,74 @@
 
 .header__actions {
   text-transform: none !important;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: -10px;
+}
+
+
+.right-flag {
+  width: 65px;
+  height: auto;
+  margin-left: 10px;
+}
+
+
+.login-link {
+  color: #0B6A82;
+  text-decoration: none;
+  font-size: 13px;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.toolbar-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0B6A82;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.credential-text {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 5px;
+  white-space: nowrap;
+  margin-left: 125px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.cred-digital {
+  color: #001489;  
+}
+
+.cred-credential {
+  color: #009a44; 
+  margin-left: 10px;  
+}
+
+.login-link,
+.toolbar-link {
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.login-link:hover,
+.toolbar-link:hover {
+  background-color: rgba(11, 106, 130, 0.08);
 }
 
 @media (min-width: 670px) {
