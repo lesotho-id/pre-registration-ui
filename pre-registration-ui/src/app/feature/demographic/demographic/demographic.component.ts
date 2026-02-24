@@ -187,7 +187,14 @@ export class DemographicComponent
    *
    * @memberof DemographicComponent
    */
-  async ngOnInit() {
+  ngOnInit(): void {
+    this.initAsync().catch(err => {
+      console.error('Initialization failed:', err);
+      this.primaryuserForm = false;
+    });
+  }
+
+  private async initAsync(): Promise<void> {
     await this.initialization();
     await this.initializeDataCaptureLanguages();
     //set translation service
@@ -204,7 +211,7 @@ export class DemographicComponent
     await this.setFormControlValues();
     if (!this.dataModification) {
       if (this.isConsentMessage)
-        this.consentDeclaration(); 
+        this.consentDeclaration();
     }
     this.onChangeHandler("");
     if (this.readOnlyMode) {
@@ -222,7 +229,7 @@ export class DemographicComponent
           .subscribe(async () => {
             this.searchInDropdown(controlId);
           });
-      }  
+      }
     });
     this.checkToShowLangChangeBtn();
     //console.log("exiting");
@@ -518,7 +525,6 @@ export class DemographicComponent
         case: "CONSENTPOPUP",
         data: newDataStructure,
         textDirectionArr: allLangsDir,
-        title: this.demographiclabels.consent.title,
         cancelBtn: this.demographiclabels.consent.cancelButton,
         alertMessageFirst: this.demographiclabels.consent.alertMessageFirst,
         alertMessageSecond: this.demographiclabels.consent.alertMessageSecond,
@@ -961,7 +967,7 @@ export class DemographicComponent
         this.jsonRulesEngine
           .run(formIdentityData)
           .then((results) => {
-            results.events.map((event) =>
+            results.events.forEach((event) =>
               console.log(
                 "jsonRulesEngine for visibleConditions run successfully",
                 event.params.data
@@ -1115,7 +1121,7 @@ export class DemographicComponent
         this.jsonRulesEngine
           .run(identityFormData)
           .then((results) => {
-            results.events.map((event) =>
+            results.events.forEach((event) =>
               console.log(
                 "jsonRulesEngine for requiredConditions run successfully",
                 event.params.data
@@ -1304,94 +1310,88 @@ export class DemographicComponent
    * @memberof DemographicComponent
    */
   async setFormControlValues() {
-    return new Promise(async (resolve) => {
-      if (!this.dataModification) {
-        this.uiFields.forEach((control, index) => {
-          this.dataCaptureLanguages.forEach((language, i) => {
-            if (this.isControlInMultiLang(control)) {
-              const controlId = control.id + "_" + language;
-              this.userForm.controls[`${controlId}`].setValue("");
-            } else if (i == 0) {
-              const controlId = control.id;
-              this.userForm.controls[`${controlId}`].setValue("");
-            }
-          });
+    if (!this.dataModification) {
+      this.uiFields.forEach((control, index) => {
+        this.dataCaptureLanguages.forEach((language, i) => {
+          if (this.isControlInMultiLang(control)) {
+            const controlId = control.id + "_" + language;
+            this.userForm.controls[`${controlId}`].setValue("");
+          } else if (i == 0) {
+            const controlId = control.id;
+            this.userForm.controls[`${controlId}`].setValue("");
+          }
         });
-        resolve(true);
-      } else {
-        this.loggerService.info("user", this.user);
-        if (this.user.request === undefined) {
-          await this.getUserInfo(this.preRegId);
-        }
-        let promisesResolved = [];
-        this.uiFields.forEach(async (control, index) => {
-          if (this.user.request.demographicDetails.identity[control.id]) {
-            if (this.isControlInMultiLang(control)) {
-              this.dataCaptureLanguages.forEach((language, i) => {
-                const controlId = control.id + "_" + language;
-                let dataArr = this.user.request.demographicDetails.identity[
+      });
+    } else {
+      this.loggerService.info("user", this.user);
+      if (this.user.request === undefined) {
+        await this.getUserInfo(this.preRegId);
+      }
+      let promisesResolved = [];
+      this.uiFields.forEach(async (control, index) => {
+        if (this.user.request.demographicDetails.identity[control.id]) {
+          if (this.isControlInMultiLang(control)) {
+            this.dataCaptureLanguages.forEach((language, i) => {
+              const controlId = control.id + "_" + language;
+              let dataArr = this.user.request.demographicDetails.identity[
                   control.id
-                ];
-                if (Array.isArray(dataArr)) {
-                  dataArr.forEach((dataArrElement) => {
-                    if (dataArrElement.language == language) {
-                      this.userForm.controls[`${controlId}`].setValue(
+                  ];
+              if (Array.isArray(dataArr)) {
+                dataArr.forEach((dataArrElement) => {
+                  if (dataArrElement.language == language) {
+                    this.userForm.controls[`${controlId}`].setValue(
                         dataArrElement.value
-                      );
-                    }
-                  });
-                }
-              });
-            } else {
-              if (control.controlType === "ageDate") {
-                this.setDateOfBirth(control.id);
+                    );
+                  }
+                });
               }
-              if (control.controlType === "date") {
-                this.setDate(control.id);
-              }
-              else if (control.type === "string") {
-                this.userForm.controls[`${control.id}`].setValue(
+            });
+          } else {
+            if (control.controlType === "ageDate") {
+              this.setDateOfBirth(control.id);
+            }
+            if (control.controlType === "date") {
+              this.setDate(control.id);
+            }
+            else if (control.type === "string") {
+              this.userForm.controls[`${control.id}`].setValue(
                   this.user.request.demographicDetails.identity[`${control.id}`]
-                );
-              }
-              else if (control.type === "simpleType") {
-                this.userForm.controls[`${control.id}`].setValue(
+              );
+            }
+            else if (control.type === "simpleType") {
+              this.userForm.controls[`${control.id}`].setValue(
                   this.user.request.demographicDetails.identity[control.id][0]
-                    .value
-                );
-              }
-              if (
+                      .value
+              );
+            }
+            if (
                 control.controlType === "dropdown" ||
                 control.controlType === "button"
-              ) {
-                if (this.isThisFieldInLocationHeirarchies(control.id)) {
-                  const locationIndex = this.getIndexInLocationHeirarchy(
+            ) {
+              if (this.isThisFieldInLocationHeirarchies(control.id)) {
+                const locationIndex = this.getIndexInLocationHeirarchy(
                     control.id
-                  );
-                  const parentLocationName = this.getLocationNameFromIndex(
+                );
+                const parentLocationName = this.getLocationNameFromIndex(
                     control.id,
                     locationIndex - 1
-                  );
-                  if (parentLocationName) {
-                    let locationCode = this.userForm.controls[parentLocationName].value;
-                    if (locationCode) {
-                      // console.log(`fetching locations for: ${control.id}`);
-                      // console.log(`with parent: ${parentLocationName} having value: ${locationCode}`);
-                      promisesResolved.push(await this.loadLocationData(locationCode, control.id));
-                      //console.log(this.selectOptionsDataArray[control.id]);
-                    }
+                );
+                if (parentLocationName) {
+                  let locationCode = this.userForm.controls[parentLocationName].value;
+                  if (locationCode) {
+                    // console.log(`fetching locations for: ${control.id}`);
+                    // console.log(`with parent: ${parentLocationName} having value: ${locationCode}`);
+                    promisesResolved.push(await this.loadLocationData(locationCode, control.id));
+                    //console.log(this.selectOptionsDataArray[control.id]);
                   }
                 }
               }
             }
           }
-        });
-        Promise.all(promisesResolved).then((values) => {
-          //console.log(`done fetching locations`);
-          resolve(true);
-        });
-      }
-    });  
+        }
+      });
+      await Promise.all(promisesResolved);
+    }
   }
 
   /**
@@ -1504,6 +1504,7 @@ export class DemographicComponent
         const newMomentObj = moment(newDate, this.serverDtFormat);
         this.userForm.controls[dateFieldId].setValue(newDate);
         this.userForm.controls[`${dateFieldId}_dateCtrl`].setValue(newMomentObj);
+        this.userForm.controls[dateFieldId].markAsDirty();
         this.userForm.controls[dateFieldId].setErrors(null);
         if (this.dataModification) {
           this.hasDobChangedFromChildToAdult(dateFieldId);
@@ -2158,7 +2159,7 @@ export class DemographicComponent
     }
   }
   
-  openLangSelectionPopup(mandatoryLanguages: string[], minLanguage: Number, maxLanguage: Number) {
+  openLangSelectionPopup(mandatoryLanguages: string[], minLanguage: number, maxLanguage: number) {
     return new Promise((resolve) => {
       const popupAttributes = Utils.getLangSelectionPopupAttributes(this.userPrefLanguageDir,
         this.dataCaptureLabels, mandatoryLanguages, minLanguage, maxLanguage, this.userPrefLanguage);

@@ -4,8 +4,9 @@
 <div>
   <div class="wrapper">
     <div class="user" *ngIf="primaryuserForm">
-      <header>{{demographiclabels.title}}
-        <span>
+      <header layout="row"> {{demographiclabels.title}}
+        <span style="display: inline-block;
+        height: 30px;">
           (
           <span *ngFor="let dataCaptureLang of dataCaptureLanguagesLabels;index as labelsIndex">
             <span [dir]="userPrefLanguageDir">&nbsp;{{dataCaptureLang}}&nbsp;</span>
@@ -19,7 +20,10 @@
         </span>
       </header>
       <p></p>
-      <span class="readOnly" *ngIf="readOnlyMode">( {{demographiclabels.read_only_message}} )</span>
+      <span class="readOnly" *ngIf="readOnlyMode && user.request['statusCode'] != 'Prefetched'" >
+        ( {{demographiclabels.read_only_message}} )</span>
+      <span class="readOnly" *ngIf="readOnlyMode && user.request['statusCode'] == 'Prefetched'" >
+        ( {{demographiclabels.read_only_message_prefetched}} )</span>
       <hr />
       <div class="user_container_single_form" *ngIf="primaryuserForm">
         <form [formGroup]="userForm" class="user__form">
@@ -49,12 +53,20 @@
                               (focusout)="transliterateFieldValue(field.id, dataCaptureLanguage, $event)"
                               (input)="transliterateFieldValue(field.id, dataCaptureLanguage, $event)" #keyboardRef
                               #input />
-                            <i *ngIf="dataCaptureLangsDir[i] === 'ltr'"
+                            <em *ngIf="dataCaptureLangsDir[i] === 'ltr'"
                               style="float: right; color: grey; cursor: pointer;" matSuffix class="material-icons"
-                              (click)="openKeyboard(field.id, dataCaptureLanguage)">keyboard</i>
-                            <i *ngIf="dataCaptureLangsDir[i] === 'rtl'"
+                              (click)="openKeyboard(field.id, dataCaptureLanguage)"
+                              (keydown.enter)="openKeyboard(field.id, dataCaptureLanguage)"
+                              (keydown.space)="openKeyboard(field.id, dataCaptureLanguage)">
+                                keyboard
+                            </em>
+                            <em *ngIf="dataCaptureLangsDir[i] === 'rtl'"
                               style="float: left; color: grey; cursor: pointer;" matSuffix class="material-icons"
-                              (click)="openKeyboard(field.id, dataCaptureLanguage)">keyboard</i>
+                              (click)="openKeyboard(field.id, dataCaptureLanguage)"
+                              (keydown.enter)="openKeyboard(field.id, dataCaptureLanguage)"
+                              (keydown.space)="openKeyboard(field.id, dataCaptureLanguage)">
+                                keyboard
+                            </em>
                           </mat-form-field>
                         </div>
                         <div *ngIf="readOnlyMode" [dir]="dataCaptureLangsDir[i]">
@@ -87,7 +99,9 @@
                       <ng-container *ngIf="field.controlType === 'button'">
                         <span *ngIf="i == 0" [dir]="dataCaptureLangsDir[i]">
                           <mat-button-toggle-group class="btn_grp" [formControlName]="field.id"
-                            (click)="onChangeHandler(field.id);">
+                            (click)="onChangeHandler(field.id)"
+                            (keydown.enter)="onChangeHandler(field.id)"
+                            (keydown.space)="onChangeHandler(field.id)">
                             <ng-container *ngFor="let button of selectOptionsDataArray[field.id]">
                               <span *ngIf="button.languageCode === dataCaptureLanguage">
                                 <mat-button-toggle class="btn_grp mat-button-toggle" value="{{button.valueCode}}"

@@ -1,8 +1,8 @@
-import { Component, OnInit, ElementRef, OnDestroy } from "@angular/core";
+import {Component, OnInit, ElementRef, OnDestroy, Sanitizer, SecurityContext} from "@angular/core";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Router, ActivatedRoute } from "@angular/router";
 import * as appConstants from "../../../app.constants";
-import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
+import { SafeResourceUrl } from "@angular/platform-browser";
 import { ViewChild } from "@angular/core";
 import { FileModel } from "src/app/shared/models/demographic-model/file.model";
 import { UserModel } from "src/app/shared/models/demographic-model/user.modal";
@@ -18,7 +18,7 @@ import { FilesModel } from "src/app/shared/models/demographic-model/files.model"
 import { LogService } from "src/app/shared/logger/log.service";
 import Utils from "src/app/app.util";
 import { Subscription } from "rxjs";
-import identityStubJson from "../../../../assets/identity-spec.json";
+
 
 @Component({
   selector: "app-file-upload",
@@ -60,6 +60,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   dataCaptureLanguages = [];
   dataCaptureLanguagesLabels = [];
   dataCaptureLangsDir = [];
+  applicationStatus: string;
+  
   ltrLangs = this.config
     .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
     .split(",");
@@ -115,7 +117,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     private dataStorageService: DataStorageService,
     private router: Router,
     private config: ConfigService,
-    public domSanitizer: DomSanitizer,
+    private sanitizer: Sanitizer,
     private bookingService: BookingService,
     private translate: TranslateService,
     private dialog: MatDialog,
@@ -125,13 +127,19 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     this.translate.use(this.userPrefLanguage);
   }
 
-  async ngOnInit() { 
+  ngOnInit(): void {
+    // keep the purely sync part here
     this.getPrimaryLabels(this.userPrefLanguage);
     if (this.ltrLangs.includes(this.userPrefLanguage)) {
-      this.userPrefLanguageDir = "ltr";
+      this.userPrefLanguageDir = 'ltr';
     } else {
-      this.userPrefLanguageDir = "rtl";
+      this.userPrefLanguageDir = 'rtl';
     }
+    // async part moved to helper; fire and forget
+    void this.initAsync();
+  }
+
+  private async initAsync(): Promise<void> {
     await this.initiateComponent();
     this.fullNameField = this.config.getConfigByKey(
       appConstants.CONFIG_KEYS.preregistration_identity_name
@@ -238,6 +246,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
             )
           );
           let resp = response[appConstants.RESPONSE];
+          this.applicationStatus = resp["statusCode"];
           if (resp["statusCode"] !== appConstants.APPLICATION_STATUS_CODES.incomplete &&
             resp["statusCode"] !== appConstants.APPLICATION_STATUS_CODES.pending) {
             this.readOnlyMode = true;
@@ -295,7 +304,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         let arr = [];
         let indice: number;
         let indexLOD: number;
-        this.LOD.filter((ele, i) => {
+         this.LOD.forEach((ele, i) => {
           if (ele.code === fileMetadata[index].docCatCode) {
             indice = index;
             indexLOD = i;
@@ -579,22 +588,36 @@ export class FileUploadComponent implements OnInit, OnDestroy {
               documentCategories.forEach((documentCategory) => {
                 this.uiFields.forEach((uiField) => {
                   if (uiField.subType == documentCategory.code) {
-                    if (uiField.inputRequired) {
+                    if (uiField.inputRequired && uiField.required) { 
                       documentCategory["required"] = uiField.required;
                       documentCategory["labelName"] = uiField.labelName;
                       documentCategory["containerStyle"] = uiField.containerStyle;
                       documentCategory["headerStyle"] = uiField.headerStyle;
                       documentCategory["id"] = uiField.id;
                       this.userForm.addControl(uiField.id, new FormControl(""));
-                      if (uiField.required) {
-                        this.userForm.controls[uiField.id].setValidators(
+                      this.userForm.controls[uiField.id].setValidators(
                           Validators.required
                         );
-                      }
                       this.userForm.controls[uiField.id].setValue("");
                       this.LOD.push(documentCategory);
                     }
                   }
+                });
+              });
+              documentCategories.forEach((documentCategory) => {
+                this.uiFields.forEach((uiField) => {
+                   if (uiField.subType == documentCategory.code) {
+                    if (uiField.inputRequired && !uiField.required) {
+                      documentCategory["required"] = uiField.required;
+                      documentCategory["labelName"] = uiField.labelName;
+                      documentCategory["containerStyle"] = uiField.containerStyle;
+                      documentCategory["headerStyle"] = uiField.headerStyle;
+                      documentCategory["id"] = uiField.id;
+                      this.userForm.addControl(uiField.id, new FormControl(""));
+                      this.userForm.controls[uiField.id].setValue("");
+                      this.LOD.push(documentCategory);
+                    }
+                  } 
                 });
               });
               if (this.userFiles && this.userFiles["documentsMetaData"]) {
@@ -806,8 +829,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
                 break;
               default:
                 this.flag = true;
-                this.fileUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
-                  "data:image/jpeg;base64," + this.fileByteArray
+                this.fileUrl = this.sanitizer.sanitize(
+                    SecurityContext.URL,
+                    "data:image/jpeg;base64," + this.fileByteArray
                 );
                 break;
             }
@@ -852,7 +876,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
                 this.users[0].files.documentsMetaData = updatedFiles;
               }
               let index: number;
-              this.LOD.filter((ele, i) => {
+              this.LOD.forEach((ele, i) => {
                 if (ele.code === fileMeta.docCatCode) index = i;
               });
               this.LOD[index].selectedDocName = "";
@@ -923,9 +947,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     docCode: string,
     refNumber: string
   ) {
-    const extensionRegex = new RegExp(
-      "(?:" + this.allowedFilesHtml.replace(/,/g, "|") + ")"
-    );
+    const extensions = this.allowedFilesHtml.split(',').map(e => e.trim()).filter(Boolean);
+    const extensionRegex = extensions.length ? new RegExp('^(?:' + extensions.join('|') + ')$') : null;
     const oldFileExtension = this.fileExtension;
     this.fileExtension = event.target.files[0].name.substring(
       event.target.files[0].name.indexOf(".") + 1
@@ -935,10 +958,10 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     this.disableNavigation = true;
 
     // if (event.target.files[0].type === file) {
-    if (extensionRegex.test(this.fileExtension)) {
+    if (extensionRegex && extensionRegex.test(this.fileExtension)) {
       allowedFileUploaded = true;
       if (
-        event.target.files[0].name.length <
+        event.target.files[0].name.length <=
         this.config.getConfigByKey(
           appConstants.CONFIG_KEYS
             .preregistration_document_alllowe_file_name_lenght
@@ -1035,7 +1058,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
+      reader.onerror = () => reject(reader.error);
     });
   }
 
@@ -1108,7 +1131,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
    */
   removeFilePreview() {
     this.fileName = "";
-    this.fileUrl = this.domSanitizer.bypassSecurityTrustResourceUrl("");
+    this.fileUrl = this.sanitizer.sanitize(SecurityContext.URL, "");
     this.fileIndex = -1;
   }
 
@@ -1160,7 +1183,11 @@ export class FileUploadComponent implements OnInit, OnDestroy {
           } 
         },
         (error) => {
-          this.showErrorMessage(error, this.messagelabels.uploadDocuments.msg7);
+          if (error && error.error && error.error.errors && error.error.errors.length > 0 && error.error.errors[0].errorCode === "PRG_PAM_DOC_025"){
+            this.showErrorMessage(error, this.messagelabels.uploadDocuments.msg14);
+          } else {
+            this.showErrorMessage(error, this.messagelabels.uploadDocuments.msg7);
+          }
           this.fileInputVariable.nativeElement.value = "";
           this.disableNavigation = false;
         },
@@ -1303,7 +1330,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
               this.registration.setSameAs(event.value);
               this.removePOADocument();
               let index: number;
-              this.LOD.filter((ele, i) => {
+              this.LOD.forEach((ele, i) => {
                 if (ele.code === "POA") index = i;
               });
               this.LOD[index].selectedDocName = "";
@@ -1341,7 +1368,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
               await this.changeStatusToPending();
               let index: number;
               let poaTypes = [];
-              this.LOD.filter((ele, i) => {
+              this.LOD.forEach((ele, i) => {
                 if (ele.code === "POA") {
                   index = i;
                   poaTypes.push(ele);

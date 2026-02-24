@@ -94,7 +94,7 @@ img {
   margin-top: 5px !important;
 }
 .card-content {
-  font-family: 'Roboto';
+  font-family: 'Roboto', sans-serif;
   color: #838383;
   opacity: 90%;
   font-size: 0.75rem;

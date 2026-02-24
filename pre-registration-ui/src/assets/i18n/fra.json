@@ -334,6 +334,7 @@
     "action_continue": "CONTINUER",
     "action_preview": "APERÇU",
     "read_only_message": "** Vous ne pouvez plus modifier cette application, car vous avez actuellement ou précédemment réservé un rendez-vous pour elle. Si vous souhaitez toujours apporter des modifications, supprimez cette application et créez-en une nouvelle.",
+    "read_only_message_prefetched": "** Vous ne pouvez plus modifier cette application, car l'application est prérécupérée. Si vous souhaitez toujours apporter des modifications, supprimez cette application et créez-en une nouvelle.",
     "lookup_search_message": "Rechercher ",
     "lookup_no_results_found": "Aucun résultat correspondant trouvé.",
     "change_data_capture_langs": "Changer les langues de capture de données",
@@ -373,9 +374,9 @@
   },
   "acknowledgement": {
     "title": "Rendez-vous confirmé",
-    "message": "L'identifiant de pré-enregistrement et les détails du rendez-vous ont été envoyés à l'identifiant et au numéro de téléphone de l'e-mail enregistré.",
+    "message": "L'identifiant de candidature et les détails du rendez-vous ont été envoyés à l'identifiant de messagerie et au numéro de téléphone enregistrés.",
     "label_name": "prénom",
-    "label_pre_id": "ID de pré-inscription",
+    "label_pre_id": "ID d'application",
     "label_reg_cntr": "Nom du centre",
     "label_cntr_contact_number": "Numéro de contact du centre",
     "label_appointment_date_time": "Date et heure du rendez-vous",
@@ -437,6 +438,7 @@
       "msg11": "Veuillez confirmer que vous souhaitez supprimer le fichier ",
       "msg12": "Veuillez saisir uniquement du texte ou des chiffres",
       "msg13": "Veuillez entrer seulement 50 caractères ou moins",
+      "msg14": "Le fichier protégé par mot de passe n'est pas autorisé au téléchargement",
       "title_confirm": "Supprimer",
       "button_cancel": "Annuler",
       "none": "aucun"
@@ -460,9 +462,12 @@
     "action_modify_information": "Modifier les informations",
     "action_modify_appointment": "Réserver / modifier un rendez-vous",
     "action_cre_application": "Créer une nouvelle application ",
+    "action_lost_uin": "Perdue UIN ",
+    "action_update_registration": "Mettre à jour l'enregistrement ",
     "card": {
       "text_app_id": "ID d'application",
       "text_name": "prénom",
+      "text_type": "Type de demande",
       "text_appoinment_date": "Date de rendez-vous",
       "text_status": "Statut",
       "action_modify_information": "Modifier les informations",
@@ -532,6 +537,7 @@
         "Voulez-vous continuer à réserver"
       ],
       "noSlotsSelectedForApplicant":"Aucune date/slot n'a été sélectionné pour une candidature",
+      "noApplicantSelected": "Aucun candidat n'a été sélectionné pour une candidature",
       "yesButtonText": "Oui",
       "noButtonText": "Non",
       "applicationLockConfirm":{
@@ -573,14 +579,15 @@
     "action_add": "Ajouter",
     "action_close": "Fermer",
     "action_add_to_slot": "Ajouter à la fente",
-    "navigation_alert": "Êtes-vous sûr de vouloir quitter le site car les données saisies ne seront pas enregistrées. Veuillez confirmer"
+    "navigation_alert": "Certaines modifications non enregistrées sur ce formulaire seront perdues si vous décidez de quitter le formulaire. Souhaitez-vous vous éloigner?"
   },
   "centerSelection": {
     "title": " Rendez-vous du livre ",
     "action_nearBy": "Proche",
     "display_recommended": "Centres recommandés",
     "text_found": "A trouvé",
-    "text_centers": "centres",
+    "text_centers": "centres.",
+    "use_search_option": "Veuillez utiliser l'option de recherche pour trouver un centre.",
     "text_timing": "Timing",
     "text_open": "Ouvrir",
     "text_select": "Sélectionner les types d'emplacement",
@@ -685,6 +692,7 @@
     "PRE-REG-OTP-406": "Échec de la validation des données d'entrée",
     "PRE-REG-OTP-407": "La génération du jeton a échoué",
     "PRE-REG-OTP-408": "OTP a déjà été généré et envoyé à votre adresse e-mail / numéro de téléphone. Si vous voulez un nouvel OTP, veuillez réessayer après un certain temps.",
+    "PRE-REG-OTP-409": "Tentative de validation OTP dépassée, veuillez régénérer OTP et réessayer après un certain temps",
     "PRG_PAM_APP_001": "Impossible de créer la pré-inscription avec les données démographiques fournies",
     "PRG_PAM_APP_002": "Impossible d'accéder à la table de pré-inscription",
     "PRG_PAM_APP_003": "l'opération de suppression n'est pas autorisée",
@@ -728,6 +736,7 @@
     "PRG_PAM_DOC_021": "Le document est déjà présent",
     "PRG_PAM_DOC_022": "DocumentId n'appartient pas à l'Id de pré-inscription",
     "PRG_PAM_DOC_024": "Le tableau des documents ne peut pas être mis à jour par ce statut",
+    "PRG_PAM_DOC_025": "Le fichier protégé par mot de passe n'est pas autorisé au téléchargement",
     "PRG_PAM_ACK_001": "Le numéro de mobile ou l'identifiant de messagerie est manquant",
     "PRG_PAM_ACK_002": "Les champs obligatoires sont manquants",
     "PRG_PAM_ACK_003": "Exception de requête http Json",

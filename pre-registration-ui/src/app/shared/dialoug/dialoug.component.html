@@ -8,7 +8,7 @@
         </mat-label>
         <input #email matInput (keyup)="validateEmail()" type="text" [(ngModel)]="applicantEmail"
           (focusout)="validateEmail();enableButton(email, mobile)" />
-        <i class="material-icons" matSuffix>email</i>
+        <em class="material-icons" matSuffix>email</em>
       </mat-form-field>
       <mat-error class="primary-errors" *ngIf="invalidApplicantEmail">
         {{ "dialog.invalidApplicantEmailId" | translate }}
@@ -21,7 +21,7 @@
         </mat-label>
         <input #mobile matInput (keyup)="validateMobile()" type="text" [(ngModel)]="applicantNumber"
           (focusout)="validateMobile();enableButton(email, mobile)" />
-        <i class="material-icons" matSuffix>chat</i>
+        <em class="material-icons" matSuffix>chat</em>
       </mat-form-field>
       <mat-error class="primary-errors" *ngIf="invalidApplicantNumber">
         {{ "dialog.invalidApplicantNumber" | translate }}
@@ -86,7 +86,7 @@
   </mat-dialog-actions>
 </div>
 <div *ngIf="input.case === 'CONSENTPOPUP'">
-  <h2 mat-dialog-title [dir]="input.textDirectionArr[0]">{{ input.title }}</h2>
+  <h2 [dir]="input.textDirectionArr[0]">{{ input.title }}</h2>
   <mat-dialog-content>
     <mat-accordion multi>
       <mat-expansion-panel *ngFor="let item of input.data; index as i; let isFirst = first;" [expanded]="isFirst">

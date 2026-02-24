@@ -46,6 +46,12 @@ export class DataStorageService {
     return this.httpClient.get<Applicant[]>(url);
   }
 
+  getApplicationDetails(applicationId: string) {
+    let url =
+      this.BASE_URL + this.PRE_REG_URL + "applications/" + applicationId;
+    return this.httpClient.get<Applicant[]>(url);
+  }
+
   /**
    * @description This method returns the user details for the given pre-registration id.
    *
@@ -60,7 +66,6 @@ export class DataStorageService {
       appConstants.APPEND_URL.applicants +
       appConstants.APPENDER +
       preRegId;
-    //console.log("url>>>>" + url);
     return this.httpClient.get(url);
   }
 
@@ -156,12 +161,30 @@ export class DataStorageService {
     );
   }
 
-  deleteRegistration(preId: string) {
+  deletePreRegistration(preId: string) {
     return this.httpClient.delete(
       this.BASE_URL +
         this.PRE_REG_URL +
-        appConstants.APPEND_URL.delete_application +
+        appConstants.APPEND_URL.delete_prereg +
         preId
+    );
+  }
+
+  deleteLostUin(appId: string) {
+    return this.httpClient.delete(
+      this.BASE_URL +
+        this.PRE_REG_URL +
+        appConstants.APPEND_URL.delete_lostuin +
+        appId
+    );
+  }
+
+  deleteUpdateRegistration(appId: string) {
+    return this.httpClient.delete(
+      this.BASE_URL +
+        this.PRE_REG_URL +
+        appConstants.APPEND_URL.delete_updateregistration +
+        appId
     );
   }
 
@@ -233,7 +256,6 @@ export class DataStorageService {
       "&pageSize=" +
       pageSize +
       "&orderBy=desc&sortBy=createdDateTime";
-    //console.log(url);
     return this.httpClient.get(url);
   }
 
@@ -258,7 +280,6 @@ export class DataStorageService {
       locCode +
       "/" +
       langCode;
-    //console.log(url);
     return this.httpClient.get(url);
   }
 
@@ -355,8 +376,6 @@ export class DataStorageService {
       appConstants.PARAMS_KEYS.POA +
       "&sourcePreId=" +
       sourceId;
-    // const params = new URLSearchParams().set(appConstants.PARAMS_KEYS.catCode, appConstants.PARAMS_KEYS.POA);
-    // params.set(appConstants.PARAMS_KEYS.sourcePrId, sourceId);
 
     return this.httpClient.put(url, {
       observe: "body",
@@ -419,7 +438,6 @@ export class DataStorageService {
     locationHierarchyCode: number,
     data: string[]
   ) {
-    //console.log(data);
     let url =
       this.BASE_URL +
       this.PRE_REG_URL +
@@ -439,7 +457,6 @@ export class DataStorageService {
     if (url.charAt(url.length - 1) === "&") {
       url = url.substring(0, url.length - 1);
     }
-    //console.log(url);
     return this.httpClient.get(url);
   }
 
@@ -489,7 +506,6 @@ export class DataStorageService {
       appConstants.APPEND_URL.validDocument +
       applicantCode +
       "/languages";
-    //console.log(APPLICANT_VALID_DOCUMENTS_URL);
     return this.httpClient.get(APPLICANT_VALID_DOCUMENTS_URL, {
       params: new HttpParams().append(
         appConstants.PARAMS_KEYS.getDocumentCategories,
@@ -504,8 +520,7 @@ export class DataStorageService {
       appConstants.APPEND_URL.location +
       appConstants.APPEND_URL.validDocument +
       applicantCode +
-      "/languages";
-    //console.log(APPLICANT_VALID_DOCUMENTS_URL);  
+      "/languages"; 
     return this.httpClient.get(APPLICANT_VALID_DOCUMENTS_URL, {
       params: new HttpParams().append(
         appConstants.PARAMS_KEYS.getDocumentCategories,
@@ -515,7 +530,6 @@ export class DataStorageService {
   }
 
   getConfig() {
-    //    return this.httpClient.get('./assets/configs.json');
     const url =
       this.BASE_URL +
       this.PRE_REG_URL +
@@ -612,15 +626,12 @@ export class DataStorageService {
   }
 
   verifyGCaptcha(captcha) {
-    //console.log(captcha);
-    const headers = new HttpHeaders({ "Content-Type": "application/json" });
     const url =
       this.BASE_URL + this.PRE_REG_URL + appConstants.APPEND_URL.captcha;
     return this.httpClient.post(url, captcha);
   }
 
   getIdentityJson() {
-    //const url = this.BASE_URL + this.PRE_REG_URL+ 'applications/config';
     let url = this.BASE_URL + this.PRE_REG_URL + `uispec/latest`;
     return this.httpClient.get(url);
   }
@@ -655,7 +666,6 @@ export class DataStorageService {
       "proxy" +
       appConstants.APPEND_URL.master_data +
       `dynamicfields?langCode=${langCode}`;
-    ////console.log(url);
     return this.httpClient.get(url);
   }
 
@@ -666,7 +676,6 @@ export class DataStorageService {
       "proxy" +
       appConstants.APPEND_URL.master_data +
       `dynamicfields?pageNumber=${pageNumber}&pageSize=10`;
-    ////console.log(url);
     return this.httpClient.get(url);
   }
 
@@ -685,7 +694,7 @@ export class DataStorageService {
     return this.httpClient.post(url, request);
   }
 
-  updateApplicationStatus(prid: String, statusCode: string) {
+  updateApplicationStatus(prid: string, statusCode: string) {
     const requesturl =
       this.BASE_URL +
       this.PRE_REG_URL +
@@ -693,9 +702,29 @@ export class DataStorageService {
     return this.httpClient.put(requesturl, {});
   }
 
-  getApplicationStatus(prid: String) {
+  getApplicationStatus(prid: string) {
     const requesturl =
       this.BASE_URL + this.PRE_REG_URL + `applications/prereg/status/${prid}`;
     return this.httpClient.get(requesturl);
+  }
+
+  getAllApplications(userId: string) {
+    let url =
+      this.BASE_URL + this.PRE_REG_URL + appConstants.APPEND_URL.allApplicants;
+    return this.httpClient.get<Applicant[]>(url);
+  }
+
+  addlostUin(request: any) {
+    const obj = new RequestModel(appConstants.IDS.newLostUin, request);
+    let url =
+      this.BASE_URL + this.PRE_REG_URL + appConstants.APPEND_URL.applicantsLostUIn;
+    return this.httpClient.post(url, obj);
+  }
+
+  addUpdateRegistration(request: any) {
+    const obj = new RequestModel(appConstants.IDS.newUpdateRegistration, request);
+    let url =
+      this.BASE_URL + this.PRE_REG_URL + appConstants.APPEND_URL.applicantsUpdateRegistration;
+    return this.httpClient.post(url, obj);
   }
 }

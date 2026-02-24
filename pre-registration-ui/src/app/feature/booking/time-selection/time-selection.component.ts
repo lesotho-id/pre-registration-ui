@@ -31,11 +31,12 @@ import { UserModel } from "src/app/shared/models/demographic-model/user.modal";
 })
 export class TimeSelectionComponent
   extends BookingDeactivateGuardService
-  implements OnInit, OnDestroy {
+  implements OnInit, OnDestroy
+{
   @ViewChild("widgetsContent", { read: ElementRef }) public widgetsContent;
   @ViewChild("cardsContent", { read: ElementRef }) public cardsContent;
   textDir = localStorage.getItem("dir");
-  registrationCenter: String;
+  registrationCenter: string;
   selectedCard: number;
   selectedTile = 0;
   showNote = false;
@@ -85,7 +86,11 @@ export class TimeSelectionComponent
     this.translate.use(this.userPreferredLangCode);
   }
 
-  async ngOnInit() {
+  ngOnInit(): void {
+    void this.initAsync();
+  }
+
+  private async initAsync(): Promise<void> {
     if (this.router.url.includes("multiappointment")) {
       this.preRegId = [...JSON.parse(localStorage.getItem("multiappointment"))];
     } else {
@@ -120,15 +125,15 @@ export class TimeSelectionComponent
     this.getSlotsforCenter(this.registrationCenter);
   }
 
-  getUserInfo(preRegId) {
-    return new Promise(async (resolve) => {
-      for (let i = 0; i < preRegId.length; i++) {
-        await this.getUserDetails(preRegId[i]).then((user) =>
-          this.userInfo.push(user)
-        );
+  async getUserInfo(preRegId) {
+    for (const id of preRegId) {
+      try {
+        const user = await this.getUserDetails(id);
+        this.userInfo.push(user);
+      } catch (error) {
+        console.error('Failed to fetch details for preRegId: %s', id, error);
       }
-      resolve(true);
-    });
+    }
   }
 
   getUserDetails(prid) {
@@ -143,9 +148,21 @@ export class TimeSelectionComponent
           )
         );
       },
+      (err) => {
+        this.dataService.getApplicationDetails(prid.toString()).subscribe((response) => {
+          resolve(
+            new UserModel(
+              prid.toString(),
+              response[appConstants.RESPONSE],
+              undefined,
+              []
+            )
+          );
+        },
         (error) => {
           this.showErrorMessage(error);
         });
+      });
     });
   }
 
@@ -158,22 +175,22 @@ export class TimeSelectionComponent
         )
         .subscribe((response) => {
           if (response[appConstants.RESPONSE]) {
-            // console.log(response[appConstants.RESPONSE]);
+            console.log(response[appConstants.RESPONSE]);
             this.regCenterInfo =
               response[appConstants.RESPONSE].registrationCenters[0];
             resolve(true);
           }
         },
-          (error) => {
-            this.showErrorMessage(error);
-          });
+        (error) => {
+          this.showErrorMessage(error);
+        });
     });
   }
 
   private prepareNameList(userInfo, regCenterInfo) {
-    // console.log(this.userInfo.length);
+    console.log(this.userInfo.length);
     userInfo.forEach((user) => {
-      // console.log(user);
+      console.log(user);
       const nameList: NameList = {
         preRegId: "",
         fullName: "",
@@ -183,43 +200,42 @@ export class TimeSelectionComponent
         bookingData: "",
         postalCode: "",
       };
-      const demographicData = user["request"].demographicDetails.identity;
-      const applicationLanguages = Utils.getApplicationLangs(user["request"]);
-      let filteredLangs = applicationLanguages.filter(applicationLang =>
+      let demographicData = {};
+      let applicationLanguages = [];
+      if (user["request"] && user["request"].demographicDetails) {
+        demographicData = user["request"].demographicDetails.identity;
+        applicationLanguages = Utils.getApplicationLangs(user["request"]);
+      }
+      
+      let filteredLangs = applicationLanguages.filter(applicationLang => 
         applicationLang == this.userPreferredLangCode
       );
-
-      let fullNameConcat = "";
-
       if (filteredLangs.length > 0) {
-        for (var names of this.name.split(",")) {
-          let nameValues = demographicData[names];
-          if (Array.isArray(nameValues) && nameValues != null && nameValues.length > 0) {
-            nameValues.forEach(nameVal => {
-              if (nameVal["language"] == this.userPreferredLangCode) {
-                fullNameConcat += nameVal["value"] + " ";
-              }
-            });
+        let nameValues = demographicData[this.name];
+        nameValues.forEach(nameVal => {
+          if (nameVal["language"] == this.userPreferredLangCode) {
+            nameList.fullName = nameVal["value"];
           }
-        }
-        nameList.fullName = fullNameConcat;
+        });  
       } else {
-        if (Array.isArray(demographicData[this.name.split(",")[0]]) && demographicData[this.name.split(",")[0]] != null && demographicData[this.name.split(",")[0]].length > 0)
-          fullNameConcat = demographicData[this.name.split(",")[0]][0].value + " "
-        if (Array.isArray(demographicData[this.name.split(",")[1]]) && demographicData[this.name.split(",")[1]] != null && demographicData[this.name.split(",")[1]].length > 0)
-          fullNameConcat += demographicData[this.name.split(",")[1]][0].value + " "
-        if (Array.isArray(demographicData[this.name.split(",")[2]]) && demographicData[this.name.split(",")[2]] != null && demographicData[this.name.split(",")[2]].length > 0)
-          fullNameConcat += demographicData[this.name.split(",")[2]][0].value
-        nameList.fullName = fullNameConcat
+        if (demographicData[this.name] && demographicData[this.name].length > 0) {
+          nameList.fullName = demographicData[this.name][0].value;
+        } else {
+          nameList.fullName = user.request.applicationId;
+        }
       }
-      nameList.preRegId = user.request.preRegistrationId;
+      if (user.request.preRegistrationId) {
+        nameList.preRegId = user.request.preRegistrationId;
+      } else {
+        nameList.preRegId = user.request.applicationId;
+      }
       nameList.status = user.request.statusCode;
       nameList.postalCode = demographicData["postalCode"];
       nameList.registrationCenter = regCenterInfo;
-      // console.log(`user.request.statusCode: ${user.request.statusCode}`);
+      console.log(`user.request.statusCode: ${user.request.statusCode}`);
       if (user.request.statusCode === appConstants.APPLICATION_STATUS_CODES.pending) {
         this.showNote = true;
-      }
+      }  
       this.names.push(nameList);
       this.temp.push(nameList);
     });
@@ -254,8 +270,6 @@ export class TimeSelectionComponent
 
   dateSelected(index: number) {
     this.selectedTile = index;
-    // this.placeNamesInSlots();
-    // this.cardSelected(0);
   }
 
   cardSelected(index: number): void {
@@ -328,7 +342,7 @@ export class TimeSelectionComponent
       });
       this.translate.get('timeSelection.text_afternoon').subscribe((label: string) => {
         afternoonLabelText = label;
-      });
+      });  
       element.timeSlots.forEach((slot) => {
         sumAvailability += slot.availability;
         slot.names = [];
@@ -336,7 +350,7 @@ export class TimeSelectionComponent
         let toTime = slot.toTime.split(":");
         if (this.registrationCenterLunchTime[0] === null) {
           slot.tag = "morning";
-          slot.tagLabel = morningLabelText;
+          slot.tagLabel = morningLabelText; 
           element.showMorning = true;
           this.morningSlotAvailable = true;
           this.afternoonSlotAvailable = false;
@@ -370,8 +384,8 @@ export class TimeSelectionComponent
       element.TotalAvailable = sumAvailability;
       element.inActive = false;
       const ltrLangs = this.configService
-        .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
-        .split(",");
+      .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
+      .split(",");
       element.displayDate = Utils.getBookingDateTime(
         element.date,
         "",
@@ -446,18 +460,18 @@ export class TimeSelectionComponent
         this.availabilityData[this.selectedTile].showAfternoon)
     ) {
       this.activeTab = selection;
-      // console.log(this.availabilityData[this.selectedTile]);
-      // console.log(
-      //   this.availabilityData[this.selectedTile].timeSlots.filter(
-      //     (day) => day.tag === this.activeTab
-      //   ).length
-      // );
+      console.log(this.availabilityData[this.selectedTile]);
+      console.log(
+        this.availabilityData[this.selectedTile].timeSlots.filter(
+          (day) => day.tag === this.activeTab
+        ).length
+      );
       this.availabilityData[this.selectedTile].timeSlots.filter(
         (day) => day.tag === this.activeTab
       ).length > 0
         ? (this.showsNamesContainer = true)
         : (this.showsNamesContainer = false);
-      // console.log(this.showsNamesContainer);
+      console.log(this.showsNamesContainer);
     }
   }
 
@@ -468,7 +482,7 @@ export class TimeSelectionComponent
       x.push(name.fullName);
     });
 
-    return x.join(", ");
+    return x.join(" \n - ");
   }
 
   async makeBooking() {
@@ -492,7 +506,15 @@ export class TimeSelectionComponent
         }
       });
     });
-    if (this.bookingDataList.length === 0) {
+    if (this.bookingDataList.length === 0 && this.selectedCard > 0 ) {
+      this.disableContinueButton = false;
+      this.showErrorMessage(
+        null,
+        this.languagelabels.noApplicantSelected
+      );
+      return;
+    }
+    else if (this.bookingDataList.length === 0 ) {
       this.disableContinueButton = false;
       this.showErrorMessage(
         null,
@@ -574,9 +596,9 @@ export class TimeSelectionComponent
         case: "CONFIRMATION",
         message:
           this.languagelabels.deletedApplicant1[0] +
-          ' - "' +
+          ' - ' +
           this.getNames() +
-          ' ". ' +
+          ' \n ' +
           this.languagelabels.deletedApplicant1[1] +
           "?",
         yesButtonText: this.languagelabels.yesButtonText,
@@ -589,7 +611,7 @@ export class TimeSelectionComponent
         disableClose: true,
       });
       const subs = dialogRef.afterClosed().subscribe((selectedOption) => {
-        if (selectedOption) {
+        if (selectedOption === true ) {
           this.bookingOperation(request);
         } else {
           this.disableContinueButton = false;
@@ -618,7 +640,7 @@ export class TimeSelectionComponent
             })
             .afterClosed()
             .subscribe(() => {
-              this.temp.forEach((name) => { });
+              this.temp.forEach((name) => {});
               this.bookingService.setSendNotification(true);
               const url = Utils.getURL(this.router.url, "summary", 3);
               if (this.router.url.includes("multiappointment")) {
@@ -631,7 +653,7 @@ export class TimeSelectionComponent
                 );
               }
             });
-        }
+        } 
       },
       (error) => {
         if (Utils.getErrorCode(error) === appConstants.ERROR_CODES.timeExpired) {
@@ -655,7 +677,7 @@ export class TimeSelectionComponent
    * @private
    * @memberof TimeSelectionComponent
    */
-  private showErrorMessage(error: any, customMsg?: string) {
+   private showErrorMessage(error: any, customMsg?: string) {
     this.spinner = false;
     this.disableContinueButton = false;
     const titleOnError = this.errorlabels.errorLabel;
@@ -669,7 +691,7 @@ export class TimeSelectionComponent
         message = this.errorlabels.slotNotAvailable;
       }
       else {
-        message = Utils.createErrorMessage(error, this.errorlabels, this.apiErrorCodes, this.configService);
+        message = Utils.createErrorMessage(error, this.errorlabels, this.apiErrorCodes, this.configService); 
       }
     }
     const messageObj = {
