@@ -282,7 +282,7 @@
     "text": "Quick & Easy steps",
     "sub_text": "Pre-register for",
     "sub_text_UID": "Unique Identification Number",
-    "label_email_num": "Email ID or Phone Number",
+    "label_email_num": "Email ID",
     "label_otp": "Enter OTP",
     "action_send": "Send OTP",
     "action_resend": "Resend",
@@ -833,3 +833,4 @@
     "UI_1004": "Enter only 10 digit numbers"
   }  
 }
+
