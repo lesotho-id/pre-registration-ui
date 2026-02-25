@@ -21,7 +21,6 @@ import { LogService } from "src/app/shared/logger/log.service";
 import { Subscription } from "rxjs";
 import { NotificationDtoModel } from "src/app/shared/models/notification-model/notification-dto.model";
 import { utf8Encode } from "@angular/compiler/src/util";
-import { UserModel } from "src/app/shared/models/demographic-model/user.modal";
 
 /**
  * @description This is the dashbaord component which displays all the users linked to the login id
@@ -66,11 +65,10 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   locationHeirarchies: any[];
   mandatoryLanguages: string[];
   optionalLanguages: string[];
-  minLanguage: number;
-  maxLanguage: number;
+  minLanguage: Number;
+  maxLanguage: Number;
   isNavigateToDemographic = false;
   appStatusCodes = appConstants.APPLICATION_STATUS_CODES;
-  newPreRegApplication = appConstants.NEW_PREREGISTRATION;
   /**
    * @description Creates an instance of DashBoardComponent.
    * @param {Router} router
@@ -105,7 +103,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    *
    * @memberof DashBoardComponent
    */
-  ngOnInit() {
+  async ngOnInit() {
     this.loginId = localStorage.getItem("loginId");
     this.mandatoryLanguages = Utils.getMandatoryLangs(this.configService);
     this.optionalLanguages = Utils.getOptionalLangs(this.configService);
@@ -139,36 +137,34 @@ export class DashBoardComponent implements OnInit, OnDestroy {
     this.name = this.configService.getConfigByKey(
       appConstants.CONFIG_KEYS.preregistration_identity_name
     );
-    this.getIdentityJsonFormat();
+    await this.getIdentityJsonFormat();
   }
 
   async getIdentityJsonFormat() {
     return new Promise((resolve, reject) => {
-      this.dataStorageService.getIdentityJson().subscribe(
-        (response) => {
-          let jsonSpec = response[appConstants.RESPONSE]["jsonSpec"];
-          this.identityData = jsonSpec["identity"]["identity"];
-          let locationHeirarchiesFromJson = [
-            ...jsonSpec["identity"]["locationHierarchy"],
-          ];
-          if (Array.isArray(locationHeirarchiesFromJson[0])) {
-            this.locationHeirarchies = locationHeirarchiesFromJson;
-          } else {
-            let hierarchiesArray = [];
-            hierarchiesArray.push(locationHeirarchiesFromJson);
-            this.locationHeirarchies = hierarchiesArray;
-          }
-          localStorage.setItem("schema", JSON.stringify(this.identityData));
-          localStorage.setItem(
-            "locationHierarchy",
-            JSON.stringify(this.locationHeirarchies[0])
-          );
-          resolve(true);
-        },
+      this.dataStorageService.getIdentityJson().subscribe((response) => {
+        let jsonSpec = response[appConstants.RESPONSE]["jsonSpec"];
+        this.identityData = jsonSpec["identity"]["identity"];
+        let locationHeirarchiesFromJson = [
+          ...jsonSpec["identity"]["locationHierarchy"],
+        ];
+        if (Array.isArray(locationHeirarchiesFromJson[0])) {
+          this.locationHeirarchies = locationHeirarchiesFromJson;
+        } else {
+          let hierarchiesArray = [];
+          hierarchiesArray.push(locationHeirarchiesFromJson);
+          this.locationHeirarchies = hierarchiesArray;
+        }
+        localStorage.setItem("schema", JSON.stringify(this.identityData));
+        localStorage.setItem(
+          "locationHierarchy",
+          JSON.stringify(this.locationHeirarchies[0])
+        );
+        resolve(true);
+      },
         (error) => {
           this.showErrorMessage(error);
-        }
-      );
+        });
     });
   }
 
@@ -187,61 +183,54 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   getUsers() {
-    this.isFetched = false;
-    const sub = this.dataStorageService
-      .getAllApplications(this.loginId)
-      .subscribe(
-        async (applicants: any) => {
-          this.loggerService.info("applicants in dashboard", applicants);
-          //console.log(applicants);
-          if (
-            applicants[appConstants.RESPONSE] &&
-            applicants[appConstants.RESPONSE] !== null
-          ) {
-            localStorage.setItem(appConstants.NEW_APPLICANT, "false");
+    const sub = this.dataStorageService.getUsers(this.loginId).subscribe(
+      (applicants: any) => {
+        this.loggerService.info("applicants in dashboard", applicants);
+        //console.log(applicants);
+        if (
+          applicants[appConstants.RESPONSE] &&
+          applicants[appConstants.RESPONSE] !== null
+        ) {
+          localStorage.setItem(appConstants.NEW_APPLICANT, "false");
 
-            this.allApplicants =
-              applicants[appConstants.RESPONSE][
-                appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.allApplications
-              ];
-            for (
-              let index = 0;
-              index <
-              applicants[appConstants.RESPONSE][
-                appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp
-                  .allApplications
-              ].length;
-              index++
-            ) {
-              localStorage.setItem(
-                "noOfApplicant",
-                applicants[appConstants.RESPONSE][
-                  appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp
-                    .allApplications
-                ].length
-              );
-              const applicant = await this.createApplicant(applicants, index);
-              this.users.push(applicant);
-            }
-          }
-          this.isFetched = true;
-        },
-        (error) => {
-          //This is a fail safe operation since for first time login
-          //user may not have any applications created. No err message to be shown.
-          this.loggerService.error("dashboard", error);
-          if (
-            Utils.getErrorCode(error) ===
-            appConstants.ERROR_CODES.noApplicantEnrolled
+          this.allApplicants =
+            applicants[appConstants.RESPONSE][
+            appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
+            ];
+          for (
+            let index = 0;
+            index <
+            applicants[appConstants.RESPONSE][
+              appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
+            ].length;
+            index++
           ) {
-            localStorage.setItem(appConstants.NEW_APPLICANT, "true");
-            this.onNewApplication();
-            this.isFetched = true;
-            return;
+            localStorage.setItem(
+              "noOfApplicant",
+              applicants[appConstants.RESPONSE][
+                appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
+              ].length
+            );
+            const applicant = this.createApplicant(applicants, index);
+            this.users.push(applicant);
           }
-          this.isFetched = true;
         }
-      );
+      },
+      (error) => {
+        //This is a fail safe operation since for first time login
+        //user may not have any applications created. No err message to be shown.
+        this.loggerService.error("dashboard", error);
+        if (Utils.getErrorCode(error) === appConstants.ERROR_CODES.noApplicantEnrolled) {
+          localStorage.setItem(appConstants.NEW_APPLICANT, "true");
+          this.onNewApplication();
+          this.isFetched = true;
+          return;
+        }
+      },
+      () => {
+        this.isFetched = true;
+      }
+    );
     this.subscriptions.push(sub);
   }
 
@@ -254,17 +243,22 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   private createAppointmentDateTime(applicant: any) {
-    const date =
+    const bookingRegistrationDTO =
       applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      ];
+    const date =
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
       ];
     const fromTime =
-      applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.slotFromTime
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
+        .time_slot_from
       ];
     const toTime =
-      applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.slotToTime
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
       ];
     let appointmentDateTime = date + " ( " + fromTime + " - " + toTime + " )";
     return appointmentDateTime;
@@ -279,12 +273,16 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   private createAppointmentDate(applicant: any) {
+    const bookingRegistrationDTO =
+      applicant[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      ];
     const ltrLangs = this.configService
       .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
       .split(",");
     const date = Utils.getBookingDateTime(
-      applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.regDate
       ],
       "",
       this.userPreferredLangCode,
@@ -303,33 +301,21 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   private createAppointmentTime(applicant: any) {
-   const fromTime =
-    applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp
-          .slotFromTime
+    const bookingRegistrationDTO =
+      applicant[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
+      ];
+    const fromTime =
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO
+        .time_slot_from
       ];
     const toTime =
-    applicant[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.slotToTime
+      bookingRegistrationDTO[
+      appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.time_slot_to
       ];
-    const fromTimeF = this.formatTime(fromTime);
-    const toTimeF = this.formatTime(toTime);
-    let appointmentTime = " ( " + fromTimeF + " - " + toTimeF + " ) ";
+    let appointmentTime = " ( " + fromTime + " - " + toTime + " ) ";
     return appointmentTime;
-  }
-
-    /**
-   * @description This method formats time from 24 hour format to 12 hour.
-   *
-   * @param {*} time
-   * @returns formattedTime
-   */
-   private formatTime(time : any) {
-    const formattedTime = new Date('1970-01-01T' + time + 'Z' )
-    .toLocaleTimeString('en-US',
-       {timeZone:'UTC',hour12:true,hour:'numeric',minute:'numeric'}
-   );
-   return formattedTime;
   }
 
   /**
@@ -340,134 +326,85 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @returns
    * @memberof DashBoardComponent
    */
-  async createApplicant(applicants: any, index: number) {
+  createApplicant(applicants: any, index: number) {
     const applicantResponse =
       applicants[appConstants.RESPONSE][
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.allApplications
+      appConstants.DASHBOARD_RESPONSE_KEYS.applicant.basicDetails
       ][index];
-    let applicationId =
-      applicantResponse[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.applicationId
-      ];
-    let applicantName = "";
-    let dataCaptureLanguagesLabels = [];
-    if (applicantResponse.bookingType == appConstants.NEW_PREREGISTRATION) {
-      let preregData = await this.getUserInfo(applicationId);
-      if (preregData) {
-        let dataAvailableLanguages = [];
-        const identityObj = preregData["demographicDetails"]["identity"];
-        if (identityObj) {
-          let keyArr: any[] = Object.keys(identityObj);
-          for (let index = 0; index < keyArr.length; index++) {
-            const elementKey = keyArr[index];
-            let dataArr = identityObj[elementKey];
-            if (Array.isArray(dataArr)) {
-              dataArr.forEach((dataArrElement) => {
-                if (
-                  !dataAvailableLanguages.includes(dataArrElement.language)
-                ) {
-                  dataAvailableLanguages.push(dataArrElement.language);
-                }
-              });
-            }
-          }
-        } else if (identityObj.langCode) {
-          dataAvailableLanguages = [identityObj.langCode];
-        }
-        dataAvailableLanguages.sort(function (a, b) {
-          return a - b;
-        });
-        dataAvailableLanguages = Utils.reorderLangsForUserPreferredLang(
-          dataAvailableLanguages,
-          this.userPreferredLangCode
-        );
-        const nameField = identityObj[this.name];
-        if (Array.isArray(nameField)) {
-          nameField.forEach((fld) => {
-            if (fld.language == this.userPreferredLangCode) {
-              applicantName = fld.value;
-            }
-          });
-          if (applicantName == "" && dataAvailableLanguages.length > 0) {
-            nameField.forEach((fld) => {
-              if (fld.language == dataAvailableLanguages[0]) {
-                applicantName = fld.value;
-              }
-            });
-          }
-        } else {
-          if (nameField) applicantName = nameField;
-          else applicantName = "";
-        }
-        dataCaptureLanguagesLabels = Utils.getLanguageLabels(
-          JSON.stringify(dataAvailableLanguages),
-          localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES)
-        );
-      }
+    let dataAvailableLanguages = [];
+    if (Array.isArray(applicantResponse["dataCaptureLanguage"])) {
+      dataAvailableLanguages = applicantResponse["dataCaptureLanguage"];
+      dataAvailableLanguages.sort(function (a, b) {
+        return a - b;
+      });
+      dataAvailableLanguages = Utils.reorderLangsForUserPreferredLang(dataAvailableLanguages, this.userPreferredLangCode);
     }
-    let bookingType = applicantResponse[
-      appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.bookingType
-    ].split("-")
+    let applicantName = "";
+    const [lastKey, midKey, firstKey] = (this.name || "").split(",");
+
+    const keys = [lastKey, midKey, firstKey].filter(k => k);
+    const metadata: any = applicantResponse["demographicMetadata"] || {};
+    const fields: Record<string, any> = {
+      last: keys[0] ? metadata[keys[0]] : null,
+      mid: keys[1] ? metadata[keys[1]] : null,
+      first: keys[2] ? metadata[keys[2]] : null,
+    };
+
+    function getNameByLang(lang: string): string {
+      return ["last", "mid", "first"]
+        .map(key => {
+          const field = fields[key];
+          if (!field) return "";
+          if (Array.isArray(field)) {
+            const match = field.find(fld => fld.language === lang);
+            return match ? match.value : "";
+          }
+          return String(field);
+        })
+        .filter(v => v && v.trim())
+        .join(" ");
+    }
+
+    applicantName = getNameByLang(this.userPreferredLangCode);
+    let dataCaptureLanguagesLabels = Utils.getLanguageLabels(JSON.stringify(dataAvailableLanguages),
+      localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES));
     const applicant: Applicant = {
-      applicationID: applicationId,
-      bookingType: bookingType.length > 0 ? bookingType[0] : '',
+      applicationID:
+        applicantResponse[appConstants.DASHBOARD_RESPONSE_KEYS.applicant.preId],
       name: applicantName,
       appointmentDateTime: applicantResponse[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ]
         ? this.createAppointmentDateTime(applicantResponse)
         : "-",
       appointmentDate: applicantResponse[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ]
         ? this.createAppointmentDate(applicantResponse)
         : "-",
       appointmentTime: applicantResponse[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
       ]
         ? this.createAppointmentTime(applicantResponse)
         : "-",
       status:
         applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.bookingStatusCode
+        appConstants.DASHBOARD_RESPONSE_KEYS.applicant.statusCode
         ],
-      regDto: applicantResponse[
-        appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
-      ] != null ? {
-        "registration_center_id": applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.registrationCenterId
+      regDto:
+        applicantResponse[
+        appConstants.DASHBOARD_RESPONSE_KEYS.bookingRegistrationDTO.dto
         ],
-        "appointment_date": applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.appointmentDate
+      postalCode:
+        applicantResponse["demographicMetadata"][
+        appConstants.DASHBOARD_RESPONSE_KEYS.applicant.postalCode
         ],
-        "time_slot_from": applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.slotFromTime
-        ],
-        "time_slot_to": applicantResponse[
-          appConstants.DASHBOARD_RESPONSE_KEYS.allApplicationsResp.slotToTime
-        ]
-      } : null,
-      dataCaptureLangs: dataCaptureLanguagesLabels,
+      dataCaptureLangs: dataCaptureLanguagesLabels
     };
-    //console.log(applicant);
+
     return applicant;
   }
 
-  async getUserInfo(preRegId) {
-    return new Promise((resolve) => {
-      this.dataStorageService
-        .getUser(preRegId)
-        .subscribe((response) => {
-          let resp = response[appConstants.RESPONSE];
-          //console.log(resp);
-          resolve(resp);
-        },
-        (error) => {
-          this.showErrorMessage(error);
-          resolve(false);
-        });
-    });
-  }
   /**
    * @description This method navigate the user to demographic page if it is a new applicant.
    *
@@ -475,9 +412,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    */
   async onNewApplication() {
     //first check if data capture languages are in session or not
-    const dataCaptureLangsFromSession = localStorage.getItem(
-      appConstants.DATA_CAPTURE_LANGUAGES
-    );
+    const dataCaptureLangsFromSession = localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES);
     console.log(`dataCaptureLangsFromSession: ${dataCaptureLangsFromSession}`);
     if (dataCaptureLangsFromSession) {
       localStorage.setItem(appConstants.MODIFY_USER, "false");
@@ -491,7 +426,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         this.router.navigate(["/"]);
       }
     } else {
-      //no data capture langs stored in session, hence prompt the user
+      //no data capture langs stored in session, hence prompt the user  
       if (
         this.maxLanguage > 1 &&
         this.optionalLanguages.length > 0 &&
@@ -500,31 +435,17 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         await this.openLangSelectionPopup();
       } else if (this.mandatoryLanguages.length > 0) {
         if (this.maxLanguage == 1) {
-          localStorage.setItem(
-            appConstants.DATA_CAPTURE_LANGUAGES,
-            JSON.stringify([this.mandatoryLanguages[0]])
-          );
+          localStorage.setItem(appConstants.DATA_CAPTURE_LANGUAGES, JSON.stringify([this.mandatoryLanguages[0]]));
         } else {
-          let reorderedArr = Utils.reorderLangsForUserPreferredLang(
-            this.mandatoryLanguages,
-            this.userPreferredLangCode
-          );
-          localStorage.setItem(
-            appConstants.DATA_CAPTURE_LANGUAGES,
-            JSON.stringify(reorderedArr)
-          );
+          let reorderedArr = Utils.reorderLangsForUserPreferredLang(this.mandatoryLanguages, this.userPreferredLangCode);
+          localStorage.setItem(appConstants.DATA_CAPTURE_LANGUAGES, JSON.stringify(reorderedArr));
         }
         this.isNavigateToDemographic = true;
       }
       if (this.isNavigateToDemographic) {
-        let dataCaptureLanguagesLabels = Utils.getLanguageLabels(
-          localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES),
-          localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES)
-        );
-        localStorage.setItem(
-          appConstants.DATA_CAPTURE_LANGUAGE_LABELS,
-          JSON.stringify(dataCaptureLanguagesLabels)
-        );
+        let dataCaptureLanguagesLabels = Utils.getLanguageLabels(localStorage.getItem(appConstants.DATA_CAPTURE_LANGUAGES),
+          localStorage.getItem(appConstants.LANGUAGE_CODE_VALUES));
+        localStorage.setItem(appConstants.DATA_CAPTURE_LANGUAGE_LABELS, JSON.stringify(dataCaptureLanguagesLabels));
         localStorage.setItem(appConstants.MODIFY_USER, "false");
         localStorage.setItem(appConstants.NEW_APPLICANT, "true");
         if (this.loginId) {
@@ -541,28 +462,16 @@ export class DashBoardComponent implements OnInit, OnDestroy {
 
   openLangSelectionPopup() {
     return new Promise((resolve) => {
-      const popupAttributes = Utils.getLangSelectionPopupAttributes(
-        this.textDir,
-        this.dataCaptureLabels,
-        this.mandatoryLanguages,
-        this.minLanguage,
-        this.maxLanguage,
-        this.userPreferredLangCode
-      );
+      const popupAttributes = Utils.getLangSelectionPopupAttributes(this.textDir,
+        this.dataCaptureLabels, this.mandatoryLanguages, this.minLanguage, this.maxLanguage, this.userPreferredLangCode);
       const dialogRef = this.openDialog(popupAttributes, "550px", "350px");
       dialogRef.afterClosed().subscribe((res) => {
         console.log(res);
         if (res == undefined) {
           this.isNavigateToDemographic = false;
         } else {
-          let reorderedArr = Utils.reorderLangsForUserPreferredLang(
-            res,
-            this.userPreferredLangCode
-          );
-          localStorage.setItem(
-            appConstants.DATA_CAPTURE_LANGUAGES,
-            JSON.stringify(reorderedArr)
-          );
+          let reorderedArr = Utils.reorderLangsForUserPreferredLang(res, this.userPreferredLangCode);
+          localStorage.setItem(appConstants.DATA_CAPTURE_LANGUAGES, JSON.stringify(reorderedArr));
           this.isNavigateToDemographic = true;
         }
         resolve(true);
@@ -575,7 +484,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
       width: width,
       // height: height,
       data: data,
-      restoreFocus: false,
+      restoreFocus: false
     });
     return dialogRef;
   }
@@ -641,139 +550,65 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   async deletePreregistration(element: any) {
     let appointmentDate;
     let appointmentTime;
-    console.log(element);
     if (element.regDto && element.status.toLowerCase() === "booked") {
       appointmentDate = element.regDto['appointment_date'];
       appointmentTime = element.regDto['time_slot_from'];
     }
     if (element.regDto && element.status.toLowerCase() === "booked") {
-      if (element.bookingType == appConstants.NEW_PREREGISTRATION) {
-        await this.sendNotification(
-          element.applicationID,
-          appointmentDate,
-          appointmentTime
-        );
-      } else {
-        await this.sendOtherNotification(
-          element.applicationID,
-          appointmentDate,
-          appointmentTime
-        );
-      }
+      await this.sendNotification(element.applicationID, appointmentDate, appointmentTime);
     }
-    if (element.bookingType == appConstants.NEW_PREREGISTRATION) {
-      const subs = this.dataStorageService
-      .deletePreRegistration(element.applicationID)
+
+    const subs = this.dataStorageService
+      .deleteRegistration(element.applicationID)
       .subscribe(
         (response) => {
           if (!response["errors"]) {
-            this.showSuccessMsg(element)
+            this.removeApplicant(element.applicationID);
+            let index = this.users.indexOf(element);
+            this.users.splice(index, 1);
+            index = this.selectedUsers.indexOf(element);
+            this.selectedUsers.splice(index, 1);
+            if (this.users.length == 0) {
+              localStorage.setItem("noOfApplicant", "0");
+              this.onNewApplication();
+              localStorage.setItem(appConstants.NEW_APPLICANT, "true");
+            } else {
+              this.displayMessage(
+                this.languagelabels.title_success,
+                this.languagelabels.deletePreregistration.msg_deleted
+              );
+            }
           }
         },
         (error) => {
-          this.showErrorMessage(
-            error,
-            this.languagelabels.title_error,
-            this.languagelabels.deletePreregistration.msg_could_not_deleted
-          );
+          this.showErrorMessage(error, this.languagelabels.title_error, this.languagelabels.deletePreregistration.msg_could_not_deleted);
         }
       );
-      this.subscriptions.push(subs);
-    }  
-    if (element.bookingType == appConstants.LOST_FORGOTTEN_UIN) {
-      const subs = this.dataStorageService
-      .deleteLostUin(element.applicationID)
-      .subscribe(
-        (response) => {
-          if (!response["errors"]) {
-            this.showSuccessMsg(element)
-          }
-        },
-        (error) => {
-          this.showErrorMessage(
-            error,
-            this.languagelabels.title_error,
-            this.languagelabels.deletePreregistration.msg_could_not_deleted
-          );
-        }
-      );
-      this.subscriptions.push(subs);
-    } 
-    if (element.bookingType == appConstants.UPDATE_REGISTRATION) {
-      const subs = this.dataStorageService
-      .deleteUpdateRegistration(element.applicationID)
-      .subscribe(
-        (response) => {
-          if (!response["errors"]) {
-            this.showSuccessMsg(element)
-          }
-        },
-        (error) => {
-          this.showErrorMessage(
-            error,
-            this.languagelabels.title_error,
-            this.languagelabels.deletePreregistration.msg_could_not_deleted
-          );
-        }
-      );
-      this.subscriptions.push(subs);
-    }  
-    
+    this.subscriptions.push(subs);
   }
 
-  showSuccessMsg(element) {
-    this.removeApplicant(element.applicationID);
-    let index = this.users.indexOf(element);
-    this.users.splice(index, 1);
-    index = this.selectedUsers.indexOf(element);
-    this.selectedUsers.splice(index, 1);
-    if (this.users.length == 0) {
-      localStorage.setItem("noOfApplicant", "0");
-      this.onNewApplication();
-      localStorage.setItem(appConstants.NEW_APPLICANT, "true");
-    } else {
-      this.displayMessage(
-        this.languagelabels.title_success,
-        this.languagelabels.deletePreregistration.msg_deleted
-      );
-    }
-  }
   cancelAppointment(element: any) {
     let appointmentDate;
     let appointmentTime;
-    console.log(element.regDto);
     if (element.regDto) {
       element.regDto.pre_registration_id = element.applicationID;
-      appointmentDate = element.regDto["appointment_date"];
-      appointmentTime = element.regDto["time_slot_from"];
+      appointmentDate = element.regDto['appointment_date'];
+      appointmentTime = element.regDto['time_slot_from'];
     }
-    console.log(element.regDto);
-    
+    //console.log(element.regDto);
     const subs = this.dataStorageService
       .cancelAppointment(
         new RequestModel(appConstants.IDS.booking, element.regDto),
         element.applicationID
       )
       .subscribe(
-        async (response) => {
+        (response) => {
           if (!response["errors"]) {
             this.displayMessage(
               this.languagelabels.title_success,
               this.languagelabels.cancelAppointment.msg_deleted
             );
-            if (element.bookingType == appConstants.NEW_PREREGISTRATION) {
-              await this.sendNotification(
-                element.applicationID,
-                appointmentDate,
-                appointmentTime
-              );
-            } else {
-              await this.sendOtherNotification(
-                element.applicationID,
-                appointmentDate,
-                appointmentTime
-              );
-            }
+            this.sendNotification(element.applicationID, appointmentDate, appointmentTime);
             const index = this.users.indexOf(element);
             this.users[index].status =
               appConstants.APPLICATION_STATUS_CODES.cancelled;
@@ -782,11 +617,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
           }
         },
         (error) => {
-          this.showErrorMessage(
-            error,
-            this.languagelabels.title_error,
-            this.languagelabels.cancelAppointment.msg_could_not_deleted
-          );
+          this.showErrorMessage(error, this.languagelabels.title_error, this.languagelabels.cancelAppointment.msg_could_not_deleted);
         }
       );
     this.subscriptions.push(subs);
@@ -939,12 +770,9 @@ export class DashBoardComponent implements OnInit, OnDestroy {
       return "orange";
     if (value === appConstants.APPLICATION_STATUS_CODES.booked) return "green";
     if (value === appConstants.APPLICATION_STATUS_CODES.expired) return "red";
-    if (value === appConstants.APPLICATION_STATUS_CODES.cancelled)
-      return "purple";
-    if (value === appConstants.APPLICATION_STATUS_CODES.incomplete)
-      return "maroon";
-    if (value === appConstants.APPLICATION_STATUS_CODES.prefetched)
-      return "blue";
+    if (value === appConstants.APPLICATION_STATUS_CODES.cancelled) return "purple";
+    if (value === appConstants.APPLICATION_STATUS_CODES.incomplete) return "maroon";
+    if (value === appConstants.APPLICATION_STATUS_CODES.prefetched) return "blue";
   }
 
   getMargin(name: string) {
@@ -978,11 +806,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @private
    * @memberof DashBoardComponent
    */
-  private showErrorMessage(
-    error: any,
-    customTitle?: string,
-    customMsg?: string
-  ) {
+  private showErrorMessage(error: any, customTitle?: string, customMsg?: string) {
     let titleOnError = this.errorLanguagelabels.errorLabel;
     if (customTitle) {
       titleOnError = customTitle;
@@ -992,12 +816,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
     if (customMsg) {
       message = customMsg;
     } else {
-      message = Utils.createErrorMessage(
-        error,
-        this.errorLanguagelabels,
-        this.apiErrorCodes,
-        this.configService
-      );
+      message = Utils.createErrorMessage(error, this.errorLanguagelabels, this.apiErrorCodes, this.configService);
     }
     const body = {
       case: "ERROR",
@@ -1052,158 +871,52 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   private sendNotification(prid, appDate, appDateTime) {
     let userDetails;
     return new Promise((resolve, reject) => {
-      this.subscriptions.push(  
-        this.dataStorageService.getUser(prid).subscribe(
-          (response) => {
-            if (response[appConstants.RESPONSE]) {
-              userDetails =
-                response[appConstants.RESPONSE].demographicDetails.identity;
-              console.log(userDetails);
-              const notificationDto = new NotificationDtoModel(
-                userDetails[this.name][0].value,
-                prid,
-                appDate,
-                appDateTime,
-                userDetails.phone,
-                userDetails.email,
-                null,
-                true
-              );
-              console.log(notificationDto);
-              const model = new RequestModel(
-                appConstants.IDS.notification,
-                notificationDto
-              );
-              let notificationRequest = new FormData();
-              notificationRequest.append(
-                appConstants.notificationDtoKeys.notificationDto,
-                JSON.stringify(model).trim()
-              );
-              notificationRequest.append(
-                appConstants.notificationDtoKeys.langCode,
-                localStorage.getItem("langCode")
-              );
-              this.dataStorageService
-                .sendCancelNotification(notificationRequest)
-                .subscribe(
-                  (response) => {
-                    resolve(true);
-                  },
-                  (error) => {
-                    resolve(true);
-                    this.showErrorMessage(error);
-                  }
-                );
-            }
-          },
+      this.subscriptions.push(
+        this.dataStorageService.getUser(prid).subscribe((response) => {
+          if (response[appConstants.RESPONSE]) {
+            userDetails = response[appConstants.RESPONSE].demographicDetails.identity;
+            console.log(userDetails);
+            const notificationDto = new NotificationDtoModel(
+              userDetails[this.name][0].value,
+              prid,
+              appDate,
+              appDateTime,
+              userDetails.phone,
+              userDetails.email,
+              null,
+              true
+            );
+            console.log(notificationDto);
+            const model = new RequestModel(
+              appConstants.IDS.notification,
+              notificationDto
+            );
+            let notificationRequest = new FormData();
+            notificationRequest.append(
+              appConstants.notificationDtoKeys.notificationDto,
+              JSON.stringify(model).trim()
+            );
+            notificationRequest.append(
+              appConstants.notificationDtoKeys.langCode,
+              localStorage.getItem("langCode")
+            );
+            this.dataStorageService
+              .sendCancelNotification(notificationRequest)
+              .subscribe((response) => {
+                resolve(true);
+              },
+                (error) => {
+                  resolve(true);
+                  this.showErrorMessage(error);
+                });
+          }
+        },
           (error) => {
             this.showErrorMessage(error);
-          }
-        )
+          })
       );
     });
   }
-
-  private sendOtherNotification(prid, appDate, appDateTime) {
-    let userDetails;
-    return new Promise((resolve, reject) => {
-      this.subscriptions.push(  
-        this.dataStorageService.getApplicationDetails(prid).subscribe(
-          (response) => {
-            if (response[appConstants.RESPONSE]) {
-              const emailRegex = new RegExp(
-                this.configService.getConfigByKey(
-                  appConstants.CONFIG_KEYS.mosip_regex_email
-                )
-              );
-              const loginId = localStorage.getItem("loginId");
-              console.log(loginId);
-              let isloginIdEmail = false;
-              if (emailRegex.test(loginId)) {
-                isloginIdEmail = true;
-              }
-              const notificationDto = new NotificationDtoModel(
-                prid,
-                prid,
-                appDate,
-                appDateTime,
-                !isloginIdEmail? loginId: null,
-                isloginIdEmail? loginId: null,
-                null,
-                true
-              );
-              console.log(notificationDto);
-              const model = new RequestModel(
-                appConstants.IDS.notification,
-                notificationDto
-              );
-              let notificationRequest = new FormData();
-              notificationRequest.append(
-                appConstants.notificationDtoKeys.notificationDto,
-                JSON.stringify(model).trim()
-              );
-              notificationRequest.append(
-                appConstants.notificationDtoKeys.langCode,
-                localStorage.getItem("langCode")
-              );
-              this.dataStorageService
-                .sendCancelNotification(notificationRequest)
-                .subscribe(
-                  (response) => {
-                    resolve(true);
-                  },
-                  (error) => {
-                    resolve(true);
-                    this.showErrorMessage(error);
-                  }
-                );
-            }
-          },
-          (error) => {
-            this.showErrorMessage(error);
-          }
-        )
-      );
-    });
-  }
-
-  onNewLostUinApplication() {
-    const request = {
-      langCode: this.userPreferredLangCode,
-    };
-    this.subscriptions.push(
-      this.dataStorageService.addlostUin(request).subscribe(
-        (response) => {
-          let newApplicationId = response[appConstants.RESPONSE].applicationId;
-          this.router.navigateByUrl(
-            `${this.userPreferredLangCode}/pre-registration/booking/${newApplicationId}/pick-center`
-          );
-        },
-        (error) => {
-          this.showErrorMessage(error);
-        }
-      )
-    );
-  }
-
-  onNewUpdateApplication() {
-    const request = {
-      langCode: this.userPreferredLangCode,
-    };
-    this.subscriptions.push(
-      this.dataStorageService.addUpdateRegistration(request).subscribe(
-        (response) => {
-          let newApplicationId = response[appConstants.RESPONSE].applicationId;
-          this.router.navigateByUrl(
-            `${this.userPreferredLangCode}/pre-registration/booking/${newApplicationId}/pick-center`
-          );
-        },
-        (error) => {
-          this.showErrorMessage(error);
-        }
-      )
-    );
-   } 
 
   ngOnDestroy(): void {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
