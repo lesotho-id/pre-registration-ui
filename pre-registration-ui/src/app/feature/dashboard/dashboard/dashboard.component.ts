@@ -65,8 +65,8 @@ export class DashBoardComponent implements OnInit, OnDestroy {
   locationHeirarchies: any[];
   mandatoryLanguages: string[];
   optionalLanguages: string[];
-  minLanguage: Number;
-  maxLanguage: Number;
+  minLanguage: number;
+  maxLanguage: number;
   isNavigateToDemographic = false;
   appStatusCodes = appConstants.APPLICATION_STATUS_CODES;
   /**
@@ -559,7 +559,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
     }
 
     const subs = this.dataStorageService
-      .deleteRegistration(element.applicationID)
+      .deletePreRegistration(element.applicationID)
       .subscribe(
         (response) => {
           if (!response["errors"]) {

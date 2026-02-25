@@ -193,7 +193,7 @@ export class TimeSelectionComponent
 
       if (filteredLangs.length > 0) {
         for (var names of this.name.split(",")) {
-          let nameValues = demographicData[this.name];
+          let nameValues = demographicData[names];
           console.log('nameValues', nameValues);
           if (Array.isArray(nameValues) && nameValues != null && nameValues.length > 0) {
             nameValues.forEach(nameVal => {
