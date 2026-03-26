@@ -875,9 +875,9 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         this.dataStorageService.getUser(prid).subscribe((response) => {
           if (response[appConstants.RESPONSE]) {
             userDetails = response[appConstants.RESPONSE].demographicDetails.identity;
-            console.log(userDetails);
+            const fullName = userDetails[this.name.split(",")[0]][0].value + " " + userDetails[this.name.split(",")[1]][0].value;
             const notificationDto = new NotificationDtoModel(
-              userDetails[this.name][0].value,
+              fullName,
               prid,
               appDate,
               appDateTime,
