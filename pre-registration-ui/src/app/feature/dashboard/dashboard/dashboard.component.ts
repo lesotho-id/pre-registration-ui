@@ -875,7 +875,20 @@ export class DashBoardComponent implements OnInit, OnDestroy {
         this.dataStorageService.getUser(prid).subscribe((response) => {
           if (response[appConstants.RESPONSE]) {
             userDetails = response[appConstants.RESPONSE].demographicDetails.identity;
-            const fullName = userDetails[this.name.split(",")[0]][0].value + " " + userDetails[this.name.split(",")[1]][0].value;
+            // console.log(JSON.stringify(userDetails));
+            let fullName = ""; 
+
+            for(var names of this.name.split(",")) {
+              if(userDetails[names]) {
+                let nameValues = userDetails[names] == null ? [] : userDetails[names];
+                nameValues.forEach(nameVal => {
+                  if(nameVal["language"] == this.userPreferredLangCode) {
+                    fullName += nameVal["value"] + " ";
+                  }
+                });
+              }
+            }
+
             const notificationDto = new NotificationDtoModel(
               fullName,
               prid,

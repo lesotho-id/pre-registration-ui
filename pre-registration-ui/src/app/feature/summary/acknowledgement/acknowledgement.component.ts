@@ -132,7 +132,6 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             for (var names of this.name.split(",")) {
               if (demographicData[names]) {
                 let nameValues = demographicData[names] == null ? [] : demographicData[names];
-                console.log('nameValues', nameValues);
                 nameValues.forEach(nameVal => {
                   if (nameVal["language"] == applicationLang) {
                     fullNameConcat += nameVal["value"] + " ";
