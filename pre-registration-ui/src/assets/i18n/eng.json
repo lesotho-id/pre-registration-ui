@@ -537,6 +537,7 @@
       "title_failure": "Failure",
       "msg_failure": "Appointment Booking Failed",
       "noSlotsSelectedForApplicant": "No Date/Slot has been selected for an application",
+      "noApplicantSelectedForSlot": "Please add at least one applicant to the selected slot",
       "noApplicantSelected": "No Applicant has been selected for an application",
       "deletedApplicant1": [
         "You have not selected any time slot for following user \r\n",

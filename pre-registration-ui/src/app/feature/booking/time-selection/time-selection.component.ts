@@ -476,8 +476,13 @@ export class TimeSelectionComponent
     this.canDeactivateFlag = false;
     this.disableContinueButton = true;
     this.bookingDataList = [];
+    let isApplicantAddedToSlot = false;
+
     this.availabilityData.forEach((data) => {
       data.timeSlots.forEach((slot) => {
+        if (slot.names.length > 0) {
+          isApplicantAddedToSlot = true;
+        }
         if (slot.names.length !== 0) {
           slot.names.forEach((name) => {
             const bookingData = new BookingModel(
@@ -493,12 +498,35 @@ export class TimeSelectionComponent
         }
       });
     });
+    // if (this.bookingDataList.length === 0) {
+    //   this.disableContinueButton = false;
+    //   this.showErrorMessage(
+    //     null,
+    //     this.languagelabels.noSlotsSelectedForApplicant
+    //   );
+    //   return;
+    // }
+
     if (this.bookingDataList.length === 0) {
       this.disableContinueButton = false;
-      this.showErrorMessage(
-        null,
-        this.languagelabels.noSlotsSelectedForApplicant
-      );
+
+      if (this.selectedCard === undefined || this.selectedCard === null) {
+        this.showErrorMessage(
+          null,
+          this.languagelabels.noSlotsSelectedForApplicant
+        );
+      }
+      else {
+        const selectedSlot =
+          this.availabilityData[this.selectedTile].timeSlots[this.selectedCard];
+
+        if (!selectedSlot || selectedSlot.names.length === 0) {
+          this.showErrorMessage(
+            null,
+            this.languagelabels.noApplicantSelectedForSlot
+          );
+        }
+      }
       return;
     }
     if (
